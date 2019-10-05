@@ -1,8 +1,7 @@
 ﻿using LilaApp.Models;
-using System.Linq;
-using System.Collections.Generic;
-using System.IO;
 using System;
+using System.IO;
+using System.Linq;
 
 namespace LilaApp
 {
@@ -19,7 +18,7 @@ namespace LilaApp
         {
             var lines = text.Split('\n')
                 // Удаляем комментарии
-                .Select(line => line.Replace("\r", "").Split("--")[0])
+                .Select(line => line.Replace("\r", "").Split(new string[] { "--" }, StringSplitOptions.RemoveEmptyEntries)[0])
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .ToList();
 
@@ -38,7 +37,7 @@ namespace LilaApp
                 .Where((line, i) => dataIndex < i && i < routeIndex)
                 .Select(line =>
                 {
-                    var values = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var values = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     var block = new Block()
                     {
                         Name = values[0],
@@ -55,7 +54,7 @@ namespace LilaApp
                 .Where((line, i) => routeIndex < i && i < orderIndex)
                 .Select(line =>
                 {
-                    var values = line.Split('-', StringSplitOptions.RemoveEmptyEntries);
+                    var values = line.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
                     var point = new Point()
                     {
                         X = double.Parse(values[0]),
@@ -76,7 +75,7 @@ namespace LilaApp
                 .Where((line, i) => topIndex < i && i < lines.Count)
                 .Select(line =>
                 {
-                    var values = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var values = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     var item = new TopologyItem()
                     {
                         FirstBlock = int.Parse(values[0]),
@@ -100,5 +99,5 @@ namespace LilaApp
             return model;
         }
     }
-    
+
 }
