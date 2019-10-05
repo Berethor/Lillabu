@@ -24,10 +24,9 @@ namespace LilaAppTests
             Assert.IsFalse(MathFunctions.CheckSegment(pointC, pointA, pointB));
             Assert.IsTrue(MathFunctions.CheckSegment(pointD, pointA, pointB));
 
-            // Проверка поворота (0 0) (-3 3) на 90 градусов и точек (-2.95 3) (-5.95 3) (-2 3)
+            // Проверка поворота (0 0) (-3 3) на 90 градусов и точек (-2 3) (-2.95 3) (-5.95 3)
             Assert.IsFalse(MathFunctions.CheckTurn(pointE1, pointCenter, pointA, pointE, 90, 3));
             Assert.IsTrue(MathFunctions.CheckTurn(pointE2, pointCenter, pointA, pointE, 90, 3));
-
             Assert.IsFalse(MathFunctions.CheckTurn(pointE3, pointCenter, pointA, pointE, 90, 3));
 
         }
@@ -60,6 +59,56 @@ namespace LilaAppTests
             Assert.IsTrue(MathFunctions.CheckSegment(new Point(A.X, -d), A, C));
             Assert.IsTrue(MathFunctions.CheckSegment(new Point((A.X + C.X) / 2, -d), A, C));
             Assert.IsTrue(MathFunctions.CheckSegment(new Point(C.X, -d), A, C));
+        }
+
+
+        [TestMethod]
+        public void Test_2_Turns()
+        {
+            var A = new Point(x: 0, y: 4);
+            var B = new Point(x: 4, y: 0);
+            var C = new Point(x: 0, y: 0);
+            var angle = 90;
+            var R = 3;
+
+            var d = 0.099;
+
+            // Поворот (0, 4) - (4, 0) с центром в (0, 0)
+
+            // Тестируем окрестности точки А:
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(0, R), C, A, B, angle, R));
+
+            // Чуть выше, чуть ниже точки А
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(0, R + d), C, A, B, angle, R));
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(0, R - d), C, A, B, angle, R));
+            // Значительно выше / ниже точки А
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(0, R + 2 * d), C, A, B, angle, R));
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(0, R - 2 * d), C, A, B, angle, R));
+
+            // Чуть правее / левее точки А
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(d, R), C, A, B, angle, R));
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(-d, R), C, A, B, angle, R));
+
+            // Значительно левее точки А
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(-2 * d, R), C, A, B, angle, R));
+
+
+            // Тестируем окрестности точки В:
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(R, 0), C, A, B, angle, R));
+
+            // Чуть правее / левее точки В
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(R + d, 0), C, A, B, angle, R));
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(R - d, 0), C, A, B, angle, R));
+            // Значительно правее / левее точки В
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(R + 2 * d, 0), C, A, B, angle, R));
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(R - 2 * d, 0), C, A, B, angle, R));
+
+            // Чуть выше / ниже точки В
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(R, d), C, A, B, angle, R));
+            Assert.IsTrue(MathFunctions.CheckTurn(new Point(R, -d), C, A, B, angle, R));
+
+            // Значительно ниже точки В
+            Assert.IsFalse(MathFunctions.CheckTurn(new Point(R, - 2 * d), C, A, B, angle, R));
         }
 
     }
