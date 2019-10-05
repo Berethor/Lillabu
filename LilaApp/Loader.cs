@@ -55,11 +55,7 @@ namespace LilaApp
                 .Select(line =>
                 {
                     var values = line.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
-                    var point = new Point()
-                    {
-                        X = double.Parse(values[0]),
-                        Y = double.Parse(values[1]),
-                    };
+                    var point = new Point(x: double.Parse(values[0]), y: double.Parse(values[1]));
 
                     return point;
                 })

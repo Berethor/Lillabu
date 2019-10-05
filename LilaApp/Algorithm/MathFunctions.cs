@@ -32,21 +32,9 @@ namespace LilaApp.Algorithm
                     Math.Pow(center.X - point.X, 2) +
                     Math.Pow(center.Y - point.Y, 2)));
 
-            var pointVector = new Point()
-            {
-                X = point.X - center.X,
-                Y = point.Y - center.Y
-            };
-            var turnStartVector = new Point()
-            {
-                X = startPoint.X - center.X,
-                Y = startPoint.Y - center.Y
-            };
-            var turnEndVvector = new Point()
-            {
-                X = endPoint.X - center.X,
-                Y = endPoint.Y - center.Y
-            };
+            var pointVector = new Point(x: point.X - center.X, y: point.Y - center.Y);
+            var turnStartVector = new Point(x: startPoint.X - center.X, y: startPoint.Y - center.Y);
+            var turnEndVvector = new Point(x: endPoint.X - center.X, y: endPoint.Y - center.Y);
 
             var isInSector = GetAngleBetweenVectors(pointVector, turnStartVector) < angle &&
                              GetAngleBetweenVectors(pointVector, turnEndVvector)  < angle;
@@ -71,11 +59,10 @@ namespace LilaApp.Algorithm
         }
         public static Point RotateCoordinates(double angle, Point point)
         {
-            return new Point()
-            {
-                X = point.X * Math.Cos(angle) + point.Y * Math.Sin(angle),
-                Y = point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
-            };
+            return new Point(
+                x: point.X * Math.Cos(angle) + point.Y * Math.Sin(angle),
+                y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
+            );
         }
     }
 }
