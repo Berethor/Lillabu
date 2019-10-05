@@ -17,9 +17,9 @@ namespace LilaApp
         public Model Parse(string text)
         {
             var lines = text.Split('\n')
-                // Удаляем комментарии
-                .Select(line => line.Replace("\r", "").Split(new string[] { "--" }, StringSplitOptions.RemoveEmptyEntries)[0])
+                .Select(line => line.Replace("\r", ""))
                 .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Select(line => line.Split(new string[] { "--" }, StringSplitOptions.RemoveEmptyEntries)[0])
                 .ToList();
 
             var dataIndex = lines.IndexOf("DATA");
