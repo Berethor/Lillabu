@@ -1,5 +1,8 @@
-﻿namespace LilaApp.Models
+﻿using System.Diagnostics;
+
+namespace LilaApp.Models
 {
+    [DebuggerDisplay("{Name} {Count} {Price}")]
     public class Block
     {
         /// <summary>

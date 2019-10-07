@@ -1,5 +1,8 @@
-﻿namespace LilaApp.Models
+﻿using System.Diagnostics;
+
+namespace LilaApp.Models
 {
+    [DebuggerDisplay("{X} {Y} ({Angle})")]
     public struct Point
     {
         public double X { get; set; }

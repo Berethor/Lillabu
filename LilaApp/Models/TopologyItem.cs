@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Diagnostics;
 
 namespace LilaApp.Models
 {
+    [DebuggerDisplay("{FirstBlock} {SecondBlock} {Direction}")]
     public class TopologyItem
     {
         public int FirstBlock { get; set; }
@@ -11,6 +10,5 @@ namespace LilaApp.Models
         public int SecondBlock { get; set; }
 
         public int Direction { get; set; }
-
     }
 }
