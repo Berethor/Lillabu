@@ -54,7 +54,7 @@ namespace LilaApp
                 .Where((line, i) => routeIndex < i && i < orderIndex)
                 .Select(line =>
                 {
-                    var values = line.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    var values = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     var point = new Point(x: double.Parse(values[0]), y: double.Parse(values[1]));
 
                     return point;
