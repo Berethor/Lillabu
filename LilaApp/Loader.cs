@@ -1,5 +1,6 @@
 ﻿using LilaApp.Models;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -17,15 +18,15 @@ namespace LilaApp
         public Model Parse(string text)
         {
             var lines = text.Split('\n')
-                .Select(line => line.Replace("\r", ""))
+                .Select(line => line.Replace("\r", "").Replace("\t", " "))
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .Select(line => line.Split(new string[] { "--" }, StringSplitOptions.RemoveEmptyEntries)[0])
                 .ToList();
 
-            var dataIndex = lines.IndexOf("DATA");
-            var routeIndex = lines.IndexOf("ROUTE");
-            var orderIndex = lines.IndexOf("ORDER");
-            var topIndex = lines.IndexOf("TOP");
+            var dataIndex = lines.FindIndex(line => line.StartsWith("DATA"));
+            var routeIndex = lines.FindIndex(line => line.StartsWith("ROUTE"));
+            var orderIndex = lines.FindIndex(line => line.StartsWith("ORDER"));
+            var topIndex = lines.FindIndex(line => line.StartsWith("TOP"));
 
             if (dataIndex == -1) routeIndex = 0;
             if (routeIndex == -1) routeIndex = lines.Count;
@@ -40,7 +41,7 @@ namespace LilaApp
                     var values = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     var block = new Block()
                     {
-                        Name = values[0],
+                        Name = values[0].Trim(),
                         Count = int.Parse(values[1]),
                         Price = int.Parse(values[2]),
                     };
@@ -55,7 +56,10 @@ namespace LilaApp
                 .Select(line =>
                 {
                     var values = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    var point = new Point(x: double.Parse(values[0]), y: double.Parse(values[1]));
+                    var point = new Point(x: 
+                        double.Parse(values[0], CultureInfo.InvariantCulture), y: 
+                        double.Parse(values[1], CultureInfo.InvariantCulture)
+                    );
 
                     return point;
                 })
@@ -64,6 +68,7 @@ namespace LilaApp
             // Порядок используемых блоков
             var order = lines
                 .Where((line, i) => orderIndex < i && i < topIndex)
+                .Select(line => line.Trim())
                 .ToList();
 
             // Топология соединения блоков

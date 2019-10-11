@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
+using System.Windows;
 using LilaApp;
 using LilaApp.Algorithm;
 
@@ -35,10 +37,17 @@ namespace Lilabu.ViewModels
 
             FileLoaderVm.InputChanged += (sender, inputContent) =>
             {
-                var model = new Loader().Parse(inputContent);
-                var trace = TraceBuilder.CalculateTrace(model);
+                try
+                {
+                    var model = new Loader().Parse(inputContent);
+                    var trace = TraceBuilder.CalculateTrace(model);
 
-                TraceMapVm.Points = trace.Points;
+                    TraceMapVm.Points = trace.Points;
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show(exception.StackTrace, exception.Message);
+                }
             };
 
         }
