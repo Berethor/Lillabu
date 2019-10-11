@@ -1,8 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace LilaApp.Models
 {
-    [DebuggerDisplay("{X} {Y} ({Angle})")]
+    [DebuggerDisplay("{StringValue}")]
     public struct Point
     {
         public double X { get; set; }
@@ -17,5 +18,7 @@ namespace LilaApp.Models
             Y = y;
             Angle = angle;
         }
+
+        public string StringValue => $"{Math.Round(X, 10)} {Math.Round(Y, 10)} ({Math.Round(Angle, 10)})";
     }
 }

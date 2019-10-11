@@ -49,13 +49,14 @@ namespace LilaApp.Algorithm
                     case 'L':
                         rotatedPoint.Y += int.Parse(t2.Substring(1));
                         endPoint = Rotate(rotatedPoint, -angle);
+                        endPoint.Angle = startPoint.Angle;
                         break;
                     case 'T':
                         var alpha = Constants.T_ANGLES[t2];
                         rotatedPoint.X += direction * Constants.RADIUS * (1 - Math.Cos(alpha));
                         rotatedPoint.Y += Constants.RADIUS * Math.Sin(alpha);
                         endPoint = Rotate(rotatedPoint, -angle);
-                        endPoint.Angle -= direction * alpha;
+                        endPoint.Angle = startPoint.Angle - direction * alpha;
                         break;
                     case 'Y':
                         forks[current] = MakeFork(startPoint, angle, direction);

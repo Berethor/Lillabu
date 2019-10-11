@@ -1,0 +1,56 @@
+﻿<UserControl x:Class="Lilabu.Views.FileLoader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewModels="clr-namespace:Lilabu.ViewModels"
+             xmlns:views="clr-namespace:Lilabu.Views"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DataContext="{d:DesignInstance Type=viewModels:FileLoaderViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="400" d:DesignWidth="400">
+    <UserControl.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="5 2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0 5"/>
+        </Style>
+    </UserControl.Resources>
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="S" Command="{Binding Path=SaveCommand}" />
+    </UserControl.InputBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Файл:" />
+            <TextBox Grid.Column="1" IsReadOnly="True" Text="{Binding Path=FilePath}" VerticalContentAlignment="Center"/>
+            <Button Grid.Column="2" Content="Выбрать" Command="{Binding Path=BrowseCommand}"/>
+        </Grid>
+
+        <!--<avalonEdit:TextEditor x:Name="TextEditor" Grid.Row="1" FontFamily="Consolas" FontSize="10pt"
+                               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" ShowLineNumbers="True"
+                               Margin="5" BorderThickness="1" BorderBrush="DarkGray"/>-->
+        <TextBox Grid.Row="1" Text="{Binding Path=InputText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                 AcceptsReturn="True" Margin="5 0" Padding="2" VerticalScrollBarVisibility="Auto" />
+
+        <Button Grid.Row="2" Content="Сохранить" Command="{Binding Path=SaveCommand}"/>
+    </Grid>
+</UserControl>
