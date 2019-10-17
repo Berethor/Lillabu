@@ -10,5 +10,14 @@ namespace LilaApp.Models
         public int SecondBlock { get; set; }
 
         public int Direction { get; set; }
+
+        public TopologyItem() { }
+
+        public TopologyItem(int firstBlock, int secondBlock, int direction)
+        {
+            FirstBlock = firstBlock;
+            SecondBlock = secondBlock;
+            Direction = direction;
+        }
     }
 }

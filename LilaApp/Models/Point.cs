@@ -20,5 +20,14 @@ namespace LilaApp.Models
         }
 
         public string StringValue => $"{Math.Round(X, 10)} {Math.Round(Y, 10)} ({Math.Round(Angle, 10)})";
+
+        public override bool Equals(object obj)
+        {
+            return
+                (obj is Point) &&
+                ((Point)obj).X == this.X &&
+                ((Point)obj).Y == this.Y &&
+                ((Point)obj).Angle == this.Angle;
+        }
     }
 }

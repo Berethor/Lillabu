@@ -19,5 +19,14 @@ namespace LilaApp.Models
         /// Цена одного блока
         /// </summary>
         public double Price { get; set; }
+
+        public Block() { }
+
+        public Block(string name, int count, double price)
+        {
+            Name = name;
+            Count = count;
+            Price = price;
+        }
     }
 }

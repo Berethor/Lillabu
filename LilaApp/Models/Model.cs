@@ -7,22 +7,39 @@ namespace LilaApp.Models
         /// <summary>
         /// Список доступных блоков
         /// </summary>
-        public List<Block> Blocks = new List<Block>();
+        public List<Block> Blocks;
 
         /// <summary>
         /// Точки маршрута
         /// </summary>
-        public List<Point> Points = new List<Point>();
+        public List<Point> Points;
 
         /// <summary>
         /// Порядок элементов
         /// </summary>
-        public List<string> Order = new List<string>();
+        public List<string> Order;
 
         /// <summary>
         /// Топология соединения блоков
         /// </summary>
-        public List<TopologyItem> Topology = new List<TopologyItem>();
+        public List<TopologyItem> Topology;
 
-     }
+        public Model()
+        {
+            Blocks = new List<Block>();
+            Points = new List<Point>();
+            Order = new List<string>();
+            Topology = new List<TopologyItem>();
+        }
+
+        public Model(int elementRestriction, int pointRestriction)
+        {
+            // В худшем случае Blocks.Count достигает Blocks.Capacity
+            Blocks = new List<Block>(elementRestriction);
+            Points = new List<Point>(pointRestriction);
+            Order = new List<string>(elementRestriction);
+            Topology = new List<TopologyItem>(elementRestriction);
+        }
+
+    }
 }
