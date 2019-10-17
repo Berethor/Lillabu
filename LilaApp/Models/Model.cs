@@ -32,6 +32,11 @@ namespace LilaApp.Models
             Topology = new List<TopologyItem>();
         }
 
+        /// <summary>
+        /// Конструктор с установкой Capacity
+        /// </summary>
+        /// <param name="elementRestriction">Ограничение на максимальное количество элементов маршрута</param>
+        /// <param name="pointRestriction">Ограничение на максимальное количество точек маршрута</param>
         public Model(int elementRestriction, int pointRestriction)
         {
             // В худшем случае Blocks.Count достигает Blocks.Capacity

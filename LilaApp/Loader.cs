@@ -110,297 +110,342 @@ namespace LilaApp
         /// <exception cref="FormatException">Исключение, в сообщении которого находится информация об ошибке</exception>
         public Model LoadAndParse(string pathToFile)
         {
-            var model = new Model(MAX_ELEMENTS_RESTRICTION, MAX_POINTS_RESTRICTION);
-            var blockReached = new Dictionary<string, bool>();
-            
-            using (var sr = new StreamReader(pathToFile))
+            try
             {
-                string line = null;
+                var model = new Model(MAX_ELEMENTS_RESTRICTION, MAX_POINTS_RESTRICTION);
+                var blockReached = new Dictionary<string, bool>();
 
-                // Блок, который считывается в данный момент
-                KeyValuePair<int, string>? currentBlock = null;
-                int blockIndex = -1;
-
-                // Был ли прочитанный блок пустым?
-                bool isCurrentBlockNonEmpty = false;
-                // Была ли встречена строка, закрывающая блок?
-                bool isEndBlockReached = false;
-
-                // Считываем файл построчно
-                for (int lineNum = 1; (line = sr.ReadLine()) != null; lineNum++)
+                using (var sr = new StreamReader(pathToFile))
                 {
-                    string exMessageTemplate = string.Format(EXCEPTION_TEMPLATE, lineNum, "{0}");
+                    string line = null;
+                    int elementsCount = 0;
+                    int pointsCount = 0;
 
-                    // Находим и удаляем комментарии в строке
-                    var commentIndex = line.IndexOf(COMMENT_SIGN);
-                    if (commentIndex != -1)
+                    // Блок, который считывается в данный момент
+                    KeyValuePair<int, string>? currentBlock = null;
+                    int blockIndex = -1;
+
+                    // Был ли прочитанный блок пустым?
+                    bool isCurrentBlockNonEmpty = false;
+                    // Была ли встречена строка, закрывающая блок?
+                    bool isEndBlockReached = false;
+
+                    byte zeroRouteCount = 0;
+                    int lastRouteLine = 0;
+
+                    // Считываем файл построчно
+                    for (int lineNum = 1; (line = sr.ReadLine()) != null; lineNum++)
                     {
-                        line = line.Remove(commentIndex);
-                    }
-                    line = line.Trim();
+                        string exMessageTemplate = string.Format(EXCEPTION_TEMPLATE, lineNum, "{0}");
 
-                    // Пропускаем строки-комметарии
-                    if (string.IsNullOrEmpty(line))
-                    {
-                        continue;
-                    }
-
-                    // Проверяем данную строку на объявление начала блока и их посследовательность
-                    if ((blockIndex = _keyWords.IndexOf(line.ToUpper())) != -1)
-                    {
-                        // Первый вариант с последовательно расположенными блоками
-                        // Может пригодится
-                        //if ((currentBlock?.Key ?? -1) != (blockIndex - 1))
-                        //{
-                        //    throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex]} block missing"));
-                        //}
-
-                        // Объявление нового блока данных без закрытия предыдущего
-                        if ((currentBlock.HasValue) && (!isEndBlockReached))
+                        // Находим и удаляем комментарии в строке
+                        var commentIndex = line.IndexOf(COMMENT_SIGN);
+                        if (commentIndex != -1)
                         {
-                            throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex]} block should be closed with \"{END_BLOCK_SIGN}\" line"));
+                            line = line.Remove(commentIndex);
+                        }
+                        line = line.Trim();
+
+                        // Пропускаем строки-комметарии
+                        if (string.IsNullOrEmpty(line))
+                        {
+                            continue;
                         }
 
-                        // Проверка на наличие данных
-                        if ((currentBlock.HasValue) && (!isCurrentBlockNonEmpty))
+                        // Проверяем данную строку на объявление начала блока и их посследовательность
+                        if ((blockIndex = _keyWords.IndexOf(line.ToUpper())) != -1)
                         {
-                            throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex]} block should not be empty"));
+                            // Первый вариант с последовательно расположенными блоками
+                            // Может пригодится
+                            //if ((currentBlock?.Key ?? -1) != (blockIndex - 1))
+                            //{
+                            //    throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex]} block missing"));
+                            //}
+
+                            // Объявление нового блока данных без закрытия предыдущего
+                            if ((currentBlock.HasValue) && (!isEndBlockReached))
+                            {
+                                throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should be closed with \"{END_BLOCK_SIGN}\" line"));
+                            }
+
+                            // Проверка на наличие данных
+                            if ((currentBlock.HasValue) && (!isCurrentBlockNonEmpty))
+                            {
+                                throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should not be empty"));
+                            }
+
+                            currentBlock = new KeyValuePair<int, string>(blockIndex, line.ToUpper());
+
+                            isCurrentBlockNonEmpty = false;
+                            isEndBlockReached = false;
+
+                            if (!blockReached.ContainsKey(currentBlock.Value.Value))
+                            {
+                                blockReached.Add(currentBlock.Value.Value, true);
+                            }
+
+                            continue;
                         }
 
-                        currentBlock = new KeyValuePair<int, string>(blockIndex, line.ToUpper());
-
-                        isCurrentBlockNonEmpty = false;
-                        isEndBlockReached = false;
-
-                        if (!blockReached.ContainsKey(currentBlock.Value.Value))
+                        // Нету объявляения блока
+                        if (currentBlock == null)
                         {
-                            blockReached.Add(currentBlock.Value.Value, true);
+                            throw new FormatException(string.Format(exMessageTemplate, $"Wrong block declaration. It is should be one of ({string.Join(",", _keyWords)})"));
                         }
 
-                        continue;
-                    }
-
-                    // Нету объявляения блока
-                    if (currentBlock == null)
-                    {
-                        throw new FormatException(string.Format(exMessageTemplate, "Input file should start with comments or block declaration"));
-                    }
-
-                    if (line.Equals(END_BLOCK_SIGN))
-                    {
-                        // Добавляем координату 0-0, если она не является последней координатой
-                        if (model.Points.Count != 0)
+                        if (line.Equals(END_BLOCK_SIGN))
                         {
-                            var point = new Point(0, 0);
-                            if (!model.Points.Last().Equals(point))
+                            // Добавляем координату 0-0, если она не является последней координатой
+                            if (model.Points.Count != 0)
                             {
-                                model.Points.Add(point);
+                                var point = new Point(0, 0);
+                                if (!model.Points.Last().Equals(point))
+                                {
+                                    model.Points.Add(point);
+                                }
                             }
+
+                            isEndBlockReached = true;
+                            continue;
                         }
 
-                        isEndBlockReached = true;
-                        continue;
+                        // Разбираем сами данные
+                        var data = line.Trim().Replace(".", ",").Split(DATA_SEPARATOR_BASIC, DATA_SEPARATOR_EXPAND);
+                        var wrongArgcExTemplate = string.Format(exMessageTemplate, "Wrong number of input args for {0} block. Should be {1} but was {2}");
+                        var wrongArgFormatExTemplate = string.Format(exMessageTemplate, "Argument has wrong format. {0}");
+
+                        switch (currentBlock.Value.Value)
+                        {
+                            case DATA_KEY_WORD:
+                                checkBlockLength(DATA_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
+
+                                var dataPointName = data[0];
+
+                                checkPointName(dataPointName, wrongArgFormatExTemplate);
+
+                                if (!int.TryParse(data[1], out int count))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The second argument should consist of integer numbers only"));
+                                }
+
+                                digitNotLessThan(count, 0, string.Format(wrongArgFormatExTemplate, "The second argument {0}"));
+
+                                if (!double.TryParse(data[2], out double price))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of numbers only"));
+                                }
+
+                                digitNotLessThan(price, 0, string.Format(wrongArgFormatExTemplate, "The third argument {0}"));
+
+                                elementsCount += count;
+
+                                if (elementsCount > MAX_ELEMENTS_RESTRICTION)
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of elements cannot be more than {MAX_ELEMENTS_RESTRICTION}"));
+                                }
+
+                                model.Blocks.Add(new Block(dataPointName, count, price));
+
+                                if (_dataBlockCache.ContainsKey(dataPointName))
+                                {
+                                    _dataBlockCache[dataPointName] += count;
+                                }
+                                else
+                                {
+                                    _dataBlockCache.Add(dataPointName, count);
+                                }
+
+                                break;
+                            case ROUTE_KEY_WORD:
+                                checkBlockLength(ROUTE_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
+
+                                if (!double.TryParse(data[0], out double xCoor))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"X\" coordinate should be numeric"));
+                                }
+
+                                if (!double.TryParse(data[1], out double yCoor))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric"));
+                                }
+
+                                if ((xCoor == 0) && (yCoor == 0))
+                                {
+                                    zeroRouteCount++;
+                                }
+
+                                if (zeroRouteCount > REQUIRED_NUM_OF_ZEROS)
+                                {
+                                    throw new FormatException(string.Format(EXCEPTION_TEMPLATE, lineNum, $"Points with zero element cannot be more than specified in {DATA_KEY_WORD} block - {REQUIRED_NUM_OF_ZEROS}"));
+                                }
+
+                                if ((model.Points.Count == 0) && (xCoor != 0) && (yCoor != 0))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\""));
+                                }
+
+                                pointsCount++;
+
+                                if (pointsCount > MAX_POINTS_RESTRICTION)
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}"));
+                                }
+
+                                model.Points.Add(new Point(xCoor, yCoor));
+                                lastRouteLine = lineNum;
+
+                                break;
+                            case ORDER_KEY_WORD:
+                                checkBlockLength(ORDER_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
+
+                                var orderPointName = data[0];
+
+                                checkPointName(orderPointName, wrongArgFormatExTemplate);
+
+                                model.Order.Add(orderPointName);
+                                _orderBlockCache.Add(lineNum, orderPointName);
+
+                                break;
+                            case TOP_KEY_WORD:
+                                checkBlockLength(TOP_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
+
+                                if (!int.TryParse(data[0], out int firstBlock))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The first argument should consist of integer numbers only"));
+                                }
+
+                                digitNotLessThan(firstBlock, 0, string.Format(wrongArgFormatExTemplate, "The first argument {0}"));
+
+                                if (!int.TryParse(data[1], out int secondBlock))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, $"The second argument should be numeric"));
+                                }
+
+                                digitNotLessThan(secondBlock, 0, string.Format(wrongArgFormatExTemplate, "The second argument {0}"));
+
+                                if (!int.TryParse(data[2], out int direction))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of integer numbers only"));
+                                }
+
+                                if (!_directions.Contains(direction))
+                                {
+                                    throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Direction should be one of ({string.Join(", ", _directions)})"));
+                                }
+
+                                var topology = new TopologyItem(firstBlock, secondBlock, direction);
+
+                                model.Topology.Add(topology);
+                                _topBlockCache.Add(lineNum, topology);
+
+                                break;
+                            // Этот код в теории должен быть недостижим
+                            default:
+                                throw new Exception(string.Format(exMessageTemplate, $"What a heck??? Line text: {line}"));
+                        }
+
+                        isCurrentBlockNonEmpty = true;
                     }
 
-                    // Разбираем сами данные
-                    var data = line.Trim().Split(DATA_SEPARATOR);
-                    var wrongArgcExTemplate = string.Format(exMessageTemplate, "Wrong number of input args for {0} block. Should be {1} but was {2}");
-                    var wrongArgFormatExTemplate = string.Format(exMessageTemplate, "Argument has wrong format. {1}");
-
-                    switch (currentBlock.Value.Value)
+                    if (zeroRouteCount != REQUIRED_NUM_OF_ZEROS)
                     {
-                        case DATA_KEY_WORD:
-                            checkBlockLength(DATA_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, lastRouteLine, $"Points with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}"));
+                    }
+                }
 
-                            var dataPointName = data[0];
+                string reachedBlockExMessage = string.Join(", ", blockReached.Where(block => !block.Value));
 
-                            checkPointName(dataPointName, wrongArgFormatExTemplate);
+                if (!string.IsNullOrEmpty(reachedBlockExMessage))
+                {
+                    throw new FormatException($"Blocks missing: {reachedBlockExMessage}");
+                }
 
-                            if (!int.TryParse(data[1], out int count))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The second argument should consist of integer numbers only"));
-                            }
+                // Создаём копию для работы
+                var dataBlockCacheCopy = _dataBlockCache.ToDictionary(pair => pair.Key, pair => pair.Value);
 
-                            digitNotLessThan(count, 0, string.Format(wrongArgcExTemplate, "The second argument {0}"));
+                // Проверка блока ORDER на соответствие блока DATA
+                foreach (var order in _orderBlockCache)
+                {
+                    var orderExTemplate = string.Format(EXCEPTION_TEMPLATE, order.Key, "{0}");
 
-                            if (!double.TryParse(data[2], out double price))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of numbers only"));
-                            }
-
-                            digitNotLessThan(price, 0, string.Format(wrongArgcExTemplate, "The third argument {0}"));
-
-                            model.Blocks.Add(new Block(dataPointName, count, price));
-
-                            if (_dataBlockCache.ContainsKey(dataPointName))
-                            {
-                                _dataBlockCache[dataPointName]++; 
-                            }
-                            else
-                            {
-                                _dataBlockCache.Add(dataPointName, 1);
-                            }
-
-                            break;
-                        case ROUTE_KEY_WORD:
-                            checkBlockLength(ROUTE_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
-
-                            if (!double.TryParse(data[0], out double xCoor))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"X\" coordinate should be numeric"));
-                            }
-
-                            if (!double.TryParse(data[1], out double yCoor))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric"));
-                            }
-
-                            if ((model.Points.Count == 0) && (xCoor != 0) && (yCoor != 0))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\""));
-                            }
-
-                            model.Points.Add(new Point(xCoor, yCoor));
-
-                            break;
-                        case ORDER_KEY_WORD:
-                            checkBlockLength(ORDER_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
-
-                            var orderPointName = data[0];
-
-                            checkPointName(orderPointName, wrongArgcExTemplate);
-
-                            model.Order.Add(orderPointName);
-                            _orderBlockCache.Add(lineNum, orderPointName);
-
-                            break;
-                        case TOP_KEY_WORD:
-                            checkBlockLength(TOP_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
-
-                            if (int.TryParse(data[0], out int firstBlock))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The first argument should consist of integer numbers only"));
-                            }
-
-                            digitNotLessThan(firstBlock, 1, string.Format(wrongArgcExTemplate, "The first argument {0}"));
-
-                            if (int.TryParse(data[1], out int secondBlock))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"The second argument should be numeric"));
-                            }
-
-                            digitNotLessThan(secondBlock, 1, string.Format(wrongArgcExTemplate, "The second argument {0}"));
-
-                            if (int.TryParse(data[2], out int direction))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of integer numbers only"));
-                            }
-
-                            if (!_directions.Equals(direction))
-                            {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Direction should be one of ({string.Join(", ", _directions)})"));
-                            }
-
-                            var topology = new TopologyItem(firstBlock, secondBlock, direction);
-
-                            model.Topology.Add(topology);
-                            _routeBlockCache.Add(lineNum, topology);
-
-                            break;
-                        // Этот код в теории должен быть недостижим
-                        default:
-                            throw new Exception(string.Format(exMessageTemplate, $"What a heck??? Line text: {line}"));
+                    if (!dataBlockCacheCopy.ContainsKey(order.Value))
+                    {
+                        throw new FormatException(string.Format(orderExTemplate, $"{order.Value} element does not exists in {DATA_KEY_WORD} block"));
                     }
 
-                    isCurrentBlockNonEmpty = true;
+                    dataBlockCacheCopy[order.Value]--;
+
+                    if (dataBlockCacheCopy[order.Value] < 0)
+                    {
+                        throw new FormatException(string.Format(orderExTemplate, $"Count of {order.Value} element cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[order.Value]}"));
+                    }
                 }
+
+                // Проверка блока TOP на соответствие блока DATA
+                var topZeroCount = 0;
+                foreach (var top in _topBlockCache)
+                {
+                    var routeExTemplate = string.Format(EXCEPTION_TEMPLATE, top.Key, "{0}");
+
+                    if (top.Value.FirstBlock == 0 || top.Value.SecondBlock == 0)
+                    {
+                        topZeroCount++;
+
+                        if (topZeroCount > REQUIRED_NUM_OF_ZEROS)
+                        {
+                            throw new FormatException(string.Format(routeExTemplate, $"Connection with zero element cannot be more than {REQUIRED_NUM_OF_ZEROS}"));
+                        }
+                    }
+                    else
+                    {
+                        if (top.Value.FirstBlock > model.Order.Count)
+                        {
+                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.FirstBlock} id does not exists in {DATA_KEY_WORD} block"));
+                        }
+
+                        if (top.Value.SecondBlock > model.Order.Count)
+                        {
+                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.SecondBlock} id does not exists in {DATA_KEY_WORD} block"));
+                        }
+
+                        var blockName = model.Order[top.Value.SecondBlock - 1];
+
+                        if (!_dataBlockCache.ContainsKey(blockName))
+                        {
+                            throw new FormatException(string.Format(routeExTemplate, $"{blockName} element does not exists in {DATA_KEY_WORD} block"));
+                        }
+
+                        _dataBlockCache[blockName]--;
+
+                        if (_dataBlockCache[blockName] < 0)
+                        {
+                            throw new FormatException(string.Format(routeExTemplate, $"Count of {blockName} elements cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[blockName]}"));
+                        }
+                    }
+                }
+                
+                if (topZeroCount != REQUIRED_NUM_OF_ZEROS)
+                {
+                    throw new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}"));
+                }
+
+                return model;
             }
-
-            string reachedBlockExMessage = string.Join(", ", blockReached.Where(block => !block.Value));
-
-            if (!string.IsNullOrEmpty(reachedBlockExMessage))
+            catch(Exception)
             {
-                throw new FormatException($"Blocks missing: {reachedBlockExMessage}");
+                throw;
             }
-
-            // Создаём копию для работы
-            var dataBlockCacheCopy = _dataBlockCache.ToDictionary(pair => pair.Key, pair => pair.Value);
-
-            // Проверка блока ORDER на соответствие блока DATA
-            foreach (var order in _orderBlockCache)
+            finally
             {
-                var orderExTemplate = string.Format(EXCEPTION_TEMPLATE, order.Key, "{0}");
-
-                if (!dataBlockCacheCopy.ContainsKey(order.Value))
-                {
-                    throw new FormatException(string.Format(orderExTemplate, $"{order.Value} element does not exists in {DATA_KEY_WORD} block"));
-                }
-
-                dataBlockCacheCopy[order.Value]--;
-
-                if (dataBlockCacheCopy[order.Value] < 0)
-                {
-                    throw new FormatException(string.Format(orderExTemplate, $"Count of {order.Value} element cannot be more than {_dataBlockCache[order.Value]}"));
-                }
+                clearDicts();
             }
-
-            // Проверка блока TOP на соответствие блока DATA
-            byte zeroCount = 0;
-            foreach (var route in _routeBlockCache)
-            {
-                var routeExTemplate = string.Format(EXCEPTION_TEMPLATE, route.Key, "{0}");
-
-                if (route.Value.FirstBlock == 0 || route.Value.SecondBlock == 0)
-                {
-                    zeroCount++;
-
-                    if (zeroCount > ALLOWED_NUM_OF_ZEROS)
-                    {
-                        throw new FormatException(string.Format(routeExTemplate, $"Connection with zero element cannot be more than {ALLOWED_NUM_OF_ZEROS}"));
-                    }
-                }
-                else
-                {
-                    if (route.Value.FirstBlock >= model.Blocks.Count)
-                    {
-                        throw new FormatException(string.Format(routeExTemplate, $"Element with {route.Value.FirstBlock} id does not exists in {DATA_KEY_WORD} block"));
-                    }
-
-                    if (route.Value.SecondBlock >= model.Blocks.Count)
-                    {
-                        throw new FormatException(string.Format(routeExTemplate, $"Element with {route.Value.SecondBlock} id does not exists in {DATA_KEY_WORD} block"));
-                    }
-
-                    var blockName = model.Order[route.Value.SecondBlock - 1];
-
-                    if (!_dataBlockCache.ContainsKey(blockName))
-                    {
-                        throw new FormatException(string.Format(routeExTemplate, $"{blockName} element does not exists in {DATA_KEY_WORD} block"));
-                    }
-
-                    _dataBlockCache[blockName]--;
-
-                    if (_dataBlockCache[blockName] < 0)
-                    {
-                        throw new FormatException(string.Format(routeExTemplate, $"Count of {blockName} element cannot be more than {_dataBlockCache[blockName]}"));
-                    }
-                }
-            }
-
-            _dataBlockCache.Clear();
-            _orderBlockCache.Clear();
-            _routeBlockCache.Clear();
-
-            GC.Collect();
-
-            return model;
         }
 
         private void digitNotLessThan(double digit, double num, string exTemplate)
         {
             if (digit < num)
             {
-                throw new FormatException(string.Format(exTemplate, "Arg should be a positive number"));
+                throw new FormatException(string.Format(exTemplate, $"Arg should be more or equal than {num}"));
             }
         }
 
@@ -420,6 +465,15 @@ namespace LilaApp
             }
         }
 
+        private void clearDicts()
+        {
+            _dataBlockCache.Clear();
+            _orderBlockCache.Clear();
+            _topBlockCache.Clear();
+
+            GC.Collect();
+        }
+
         #region Private Members
 
         private static readonly List<string> _keyWords = new List<string>()
@@ -437,7 +491,7 @@ namespace LilaApp
         // Ключ - номер строки
         // Значение - элемент строки
         private readonly Dictionary<int, string> _orderBlockCache = new Dictionary<int, string>(MAX_ELEMENTS_RESTRICTION);
-        private readonly Dictionary<int, TopologyItem> _routeBlockCache = new Dictionary<int, TopologyItem>(MAX_ELEMENTS_RESTRICTION);
+        private readonly Dictionary<int, TopologyItem> _topBlockCache = new Dictionary<int, TopologyItem>(MAX_ELEMENTS_RESTRICTION);
 
         #endregion Private Members
 
@@ -446,7 +500,7 @@ namespace LilaApp
         // Думаю, что это можно (но не обязательно) будет в конфиг файл завернуть
         private const string ALLOWED_CHARS = "LTY";
 
-        private const int ALLOWED_NUM_OF_ZEROS = 2;
+        private const int REQUIRED_NUM_OF_ZEROS = 2;
 
         private const string DATA_KEY_WORD = "DATA";
         private const string ROUTE_KEY_WORD = "ROUTE";
@@ -460,7 +514,8 @@ namespace LilaApp
 
         private const string END_BLOCK_SIGN = "/";
         private const string COMMENT_SIGN = "--";
-        private const char DATA_SEPARATOR = ' ';
+        private const char DATA_SEPARATOR_BASIC = ' ';
+        private const char DATA_SEPARATOR_EXPAND = '\t';
 
         private const int MAX_ELEMENTS_RESTRICTION = 100000;
         private const int MAX_POINTS_RESTRICTION = 1000;

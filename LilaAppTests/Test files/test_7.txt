@@ -1,0 +1,26 @@
+--TEST3
+
+-- Something
+DATA
+L1 10 100
+L2 10 10
+T4 10 12
+/
+
+ROUTE
+0 0 
+100 100
+/
+
+ORDER
+L1
+L1
+T4
+T4
+/
+
+TOP
+0 1 1
+1 2 1
+2 0 1
+/
