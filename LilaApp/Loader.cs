@@ -130,9 +130,6 @@ namespace LilaApp
                     // Была ли встречена строка, закрывающая блок?
                     bool isEndBlockReached = false;
 
-                    byte zeroRouteCount = 0;
-                    int lastRouteLine = 0;
-
                     // Считываем файл построчно
                     for (int lineNum = 1; (line = sr.ReadLine()) != null; lineNum++)
                     {
@@ -269,16 +266,6 @@ namespace LilaApp
                                     throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric"));
                                 }
 
-                                if ((xCoor == 0) && (yCoor == 0))
-                                {
-                                    zeroRouteCount++;
-                                }
-
-                                if (zeroRouteCount > REQUIRED_NUM_OF_ZEROS)
-                                {
-                                    throw new FormatException(string.Format(EXCEPTION_TEMPLATE, lineNum, $"Points with zero element cannot be more than specified in {DATA_KEY_WORD} block - {REQUIRED_NUM_OF_ZEROS}"));
-                                }
-
                                 if ((model.Points.Count == 0) && (xCoor != 0) && (yCoor != 0))
                                 {
                                     throw new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\""));
@@ -292,7 +279,6 @@ namespace LilaApp
                                 }
 
                                 model.Points.Add(new Point(xCoor, yCoor));
-                                lastRouteLine = lineNum;
 
                                 break;
                             case ORDER_KEY_WORD:
@@ -345,11 +331,6 @@ namespace LilaApp
                         }
 
                         isCurrentBlockNonEmpty = true;
-                    }
-
-                    if (zeroRouteCount != REQUIRED_NUM_OF_ZEROS)
-                    {
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, lastRouteLine, $"Points with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}"));
                     }
                 }
 
