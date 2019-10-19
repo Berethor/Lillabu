@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vies="clr-namespace:Lilabu.Views"
+        xmlns:views="clr-namespace:Lilabu.Views"
         xmlns:viewModels="clr-namespace:Lilabu.ViewModels"
         d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}"
         Title="{Binding Path=Title}" 
@@ -20,11 +20,11 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <GroupBox Header="Исходные данные:">
-            <vies:FileLoader DataContext="{Binding Path=FileLoaderVm}" />
+            <views:FileLoader DataContext="{Binding Path=FileLoaderVm}" />
         </GroupBox>
         <GridSplitter Grid.Column="0" Width="10" Background="White" Margin="0 0 -5 0"/>
         <GroupBox Header="Карта маршрута:" Grid.Column="1">
-            <vies:TraceMap DataContext="{Binding Path=TraceMapVm}" />
+            <views:TraceMap DataContext="{Binding Path=.}" />
         </GroupBox>
     </Grid>
 </Window>

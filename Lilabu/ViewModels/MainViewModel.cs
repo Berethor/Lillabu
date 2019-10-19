@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using LilaApp;
 using LilaApp.Algorithm;
+using LilaApp.Models;
 
 namespace Lilabu.ViewModels
 {
@@ -26,6 +27,11 @@ namespace Lilabu.ViewModels
         /// </summary>
         public TraceMapViewModel TraceMapVm { get; } = new TraceMapViewModel();
 
+        /// <summary>
+        /// Исходная модель
+        /// </summary>
+        public Model Model { get; private set; }
+
         #endregion
 
         /// <summary>
@@ -41,6 +47,8 @@ namespace Lilabu.ViewModels
                 {
                     var model = new Loader().Parse(inputContent);
                     var trace = TraceBuilder.CalculateTrace(model);
+
+                    Model = model;
 
                     TraceMapVm.Points = trace.Points;
                 }

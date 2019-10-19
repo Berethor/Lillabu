@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:viewModels="clr-namespace:Lilabu.ViewModels"
-             d:DataContext="{d:DesignInstance Type=viewModels:TraceMapViewModel}"
+             d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}"
              mc:Ignorable="d" 
              Loaded="TraceMap_OnLoaded"
              d:DesignHeight="450" d:DesignWidth="800">
@@ -27,7 +27,7 @@
                                 <ScaleTransform ScaleY="-1"/>
                             </TransformGroup>
                         </Grid.LayoutTransform>
-                        <Grid x:Name="grid_Map" Width="{Binding Path=Width}" Height="{Binding Path=Height}" ClipToBounds="False"/>
+                        <Grid x:Name="grid_Map" Width="{Binding Path=TraceMapVm.Width}" Height="{Binding Path=TraceMapVm.Height}" ClipToBounds="False"/>
                         
                     </Grid>
                 </Viewbox>
