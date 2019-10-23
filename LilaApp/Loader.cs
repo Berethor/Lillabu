@@ -441,7 +441,7 @@ namespace LilaApp
                     // У блока Y может быть 1 неиспользованное соединение, у остальных блоков - нет
                     else if (usageCount == 1 && !element.StartsWith("Y"))
                     { 
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) used only {usageCount} time in {TOP_KEY_WORD} block"));
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block"));
                     }
                 }
 
