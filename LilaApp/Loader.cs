@@ -381,12 +381,12 @@ namespace LilaApp
                     {
                         if (top.Value.FirstBlock > model.Order.Count)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.FirstBlock} id does not exists in {DATA_KEY_WORD} block"));
+                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.FirstBlock} id does not exists in {ORDER_KEY_WORD} block"));
                         }
 
                         if (top.Value.SecondBlock > model.Order.Count)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.SecondBlock} id does not exists in {DATA_KEY_WORD} block"));
+                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.SecondBlock} id does not exists in {ORDER_KEY_WORD} block"));
                         }
 
                         var blockName = model.Order[top.Value.SecondBlock - 1];
@@ -408,6 +408,41 @@ namespace LilaApp
                 if (topZeroCount != REQUIRED_NUM_OF_ZEROS)
                 {
                     throw new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}"));
+                }
+
+                // Проверка, что все элементы из блока ORDER используются не больше двух (для Y - трёх) раз
+                var orderElemetnsAvaliableConnections = model.Order.Select((item, index) => item.StartsWith("Y") ? 3 : 2).ToList();
+                orderElemetnsAvaliableConnections.Insert(0, 2);
+                foreach (var top in _topBlockCache)
+                {
+                    // Превышено допустимое количество использования блока
+                    if (orderElemetnsAvaliableConnections[top.Value.FirstBlock]-- < 0)
+                    {
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.FirstBlock} usage exceeded"));
+                    }
+                    if (orderElemetnsAvaliableConnections[top.Value.SecondBlock]-- < 0)
+                    {
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.SecondBlock} usage exceeded"));
+                    }
+                }
+
+                // Проверка, что все элементы из блока ORDER используются в блоке TOP
+                var orderBlockKeys = _orderBlockCache.Keys.ToArray();
+                for (int i = 0; i < model.Order.Count; i++)
+                {
+                    var orderLine = orderBlockKeys[i];
+                    var element = _orderBlockCache[orderLine];
+                    var usageCount = orderElemetnsAvaliableConnections[i];
+
+                    if (usageCount >= 2)
+                    {
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) isn't used in {TOP_KEY_WORD} block"));
+                    }  
+                    // У блока Y может быть 1 неиспользованное соединение, у остальных блоков - нет
+                    else if (usageCount == 1 && !element.StartsWith("Y"))
+                    { 
+                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) used only {usageCount} time in {TOP_KEY_WORD} block"));
+                    }
                 }
 
                 return model;

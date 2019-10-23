@@ -165,6 +165,20 @@ namespace LilaAppTests
         }
 
         [TestMethod]
+        public void TestVasekinFile8()
+        {
+            var pathToFile = "Test files\\test_8.txt";
+            try
+            {
+                var loadModel = Loader.LoadAndParse(pathToFile);
+            }
+            catch (FormatException e)
+            {
+                Assert.Fail(pathToFile + ": " + e.Message);
+            }
+        }
+
+        [TestMethod]
         public void Test_1_LoadData_1()
         {
             var text = @"
