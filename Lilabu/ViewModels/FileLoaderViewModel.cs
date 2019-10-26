@@ -51,7 +51,10 @@ namespace Lilabu.ViewModels
 
             SaveCommand = new BaseCommand(() =>
             {
-                File.WriteAllText(FilePath, InputText);
+                if (!string.IsNullOrEmpty(FilePath))
+                {
+                    File.WriteAllText(FilePath, InputText);
+                }
 
                 InputChanged?.Invoke(this, InputText);
             });

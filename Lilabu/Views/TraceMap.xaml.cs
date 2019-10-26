@@ -26,7 +26,7 @@ namespace Lilabu.Views
         private void TraceMap_OnLoaded(object sender, RoutedEventArgs e)
         {
             MainVM = DataContext as MainViewModel;
-            VM = MainVM.TraceMapVm;
+            VM = MainVM?.TraceMapVm;
 
             if (VM != null)
             {

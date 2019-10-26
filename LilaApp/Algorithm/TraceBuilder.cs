@@ -31,8 +31,8 @@ namespace LilaApp.Algorithm
                 var direction = item.Direction;
 
                 // Типы блоков
-                var t1 = previos > 0 ? model.Order[previos-1] : "L0";
-                var t2 = model.Order[current-1];
+                var t1 = previos > 0 ? model.Order[previos - 1] : "L0";
+                var t2 = current > 0 ? model.Order[current - 1] : "L0";
 
                 // Извлечение начальной точки
                 var startPoint = (t1[0] == 'Y')
