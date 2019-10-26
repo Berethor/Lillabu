@@ -14,6 +14,7 @@ namespace Lilabu.Views
 
     public partial class TraceMap : UserControl
     {
+        public MainViewModel MainVM;
         public TraceMapViewModel VM;
 
         public TraceMap()
@@ -24,7 +25,8 @@ namespace Lilabu.Views
         }
         private void TraceMap_OnLoaded(object sender, RoutedEventArgs e)
         {
-            VM = DataContext as TraceMapViewModel;
+            MainVM = DataContext as MainViewModel;
+            VM = MainVM.TraceMapVm;
 
             if (VM != null)
             {
@@ -73,6 +75,29 @@ namespace Lilabu.Views
                     });
                 }
 
+                void AddArc(Point p1, Point p2, int direction)
+                {
+                    const double radius = 3;
+
+                    var x1 = padding + multiplier * (p1.X - minPoint.X);
+                    var x2 = padding + multiplier * (p2.X - minPoint.X);
+                    var y1 = padding + multiplier * (p1.Y - minPoint.Y);
+                    var y2 = padding + multiplier * (p2.Y - minPoint.Y);
+
+                    var arc = new ArcSegment()
+                    {
+                        Point = new WinPoint(x2, y2),
+                        Size = new Size(radius * multiplier, radius * multiplier),
+                        SweepDirection = direction == 1 ? SweepDirection.Counterclockwise : SweepDirection.Clockwise,
+                    };
+                    var figure = new PathFigure() { StartPoint = new WinPoint(x1, y1) };
+                    figure.Segments.Add(arc);
+                    var geometry = new PathGeometry();
+                    geometry.Figures.Add(figure);
+                    var path = new Path() { Data = geometry, Stroke = Brushes.Red, StrokeThickness = 1 };
+                    grid_Map.Children.Add(path);
+                }
+
                 // Сетка
                 for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
                     AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
@@ -87,7 +112,17 @@ namespace Lilabu.Views
                 // Трасса
                 for (var i = 0; i < points.Length - 1; i++)
                 {
-                    AddLine(points[i], points[i + 1], Brushes.Red);
+                    if (MainVM.Model.Order[i].StartsWith("T"))
+                    {
+                        // Рисуем дугу
+                        var direction = MainVM.Model.Topology[i].Direction;
+                        AddArc(points[i], points[i + 1], direction);
+                    }
+                    else
+                    {
+                        // Рисуем линию
+                        AddLine(points[i], points[i + 1], Brushes.Red);
+                    }
                 }
 
             }
