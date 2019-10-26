@@ -48,8 +48,10 @@
         <!--<avalonEdit:TextEditor x:Name="TextEditor" Grid.Row="1" FontFamily="Consolas" FontSize="10pt"
                                VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" ShowLineNumbers="True"
                                Margin="5" BorderThickness="1" BorderBrush="DarkGray"/>-->
-        <TextBox Grid.Row="1" Text="{Binding Path=InputText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                 AcceptsReturn="True" Margin="5 0" Padding="2" VerticalScrollBarVisibility="Auto" />
+        <TextBox x:Name="textBox_text" Grid.Row="1" Text="{Binding Path=InputText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                 AcceptsReturn="True" Margin="5 0" Padding="2" VerticalScrollBarVisibility="Visible" />
+
+        <TextBlock x:Name="textBlock_lineNumber" Grid.Row="1" Text="Line: 1" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="28 3" Foreground="Gray" />
 
         <Button Grid.Row="2" Content="Сохранить" Command="{Binding Path=SaveCommand}"/>
     </Grid>
