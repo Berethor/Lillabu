@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using LilaApp;
 using LilaApp.Algorithm;
@@ -15,6 +16,11 @@ namespace Lilabu.ViewModels
         /// </summary>
         public string Title { get => Get<string>(); set => Set(value); }
         
+        /// <summary>
+        /// Текст вывода
+        /// </summary>
+        public string Output { get => Get<string>(); set => Set(value); }
+
         /// <summary>
         /// View-Model загрузки файла исходных данных
         /// </summary>
@@ -43,12 +49,14 @@ namespace Lilabu.ViewModels
             {
                 try
                 {
-                    var model = new Loader().Parse(inputContent);
+                    var (model, errors) = new Loader().CheckAndParse(inputContent);
                     var trace = TraceBuilder.CalculateTrace(model);
 
                     Model = model;
 
                     TraceMapVm.Points = trace.Points;
+
+                    Output = string.Join("\r\n", errors.Select(error => error.Message));
                 }
                 catch (Exception exception)
                 {

@@ -14,7 +14,7 @@ namespace LilaApp
         /// </summary>
         /// <param name="fileName">Путь к файлу</param>
         /// <returns>Преобразованная информация в объект данных</returns>
-        public Model Load(string fileName)
+        public Model LoadAndParse(string fileName)
         {
             var text = File.ReadAllText(fileName);
 
@@ -29,6 +29,26 @@ namespace LilaApp
         /// <exception cref="FormatException">Исключение, в сообщении которого находится информация об ошибке</exception>
         public Model Parse(string text)
         {
+            var (model, errors) = CheckAndParse(text);
+
+            if (errors.Length > 0)
+            {
+                throw errors[0];
+            }
+
+            return model;
+        }
+
+        /// <summary>
+        /// Разбор и проверка входных данных
+        /// </summary>
+        /// <param name="text">Содержимое входных данных</param>
+        /// <returns>Преобразованная информация в объект данных и список ошибок</returns>
+        /// <exception cref="FormatException">Исключение, в сообщении которого находится информация об ошибке</exception>
+        public Tuple<Model, Exception[]> CheckAndParse(string text)
+        {
+            var exceptions = new List<Exception>();
+
             try
             {
                 var lines = text.Replace("\r", "").Split('\n');
@@ -82,13 +102,13 @@ namespace LilaApp
                         // Объявление нового блока данных без закрытия предыдущего
                         if ((currentBlock.HasValue) && (!isEndBlockReached))
                         {
-                            throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should be closed with \"{END_BLOCK_SIGN}\" line"));
+                            exceptions.Add(new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should be closed with \"{END_BLOCK_SIGN}\" line")));
                         }
 
                         // Проверка на наличие данных
-                        if ((currentBlock.HasValue) && (!isCurrentBlockNonEmpty))
+                        if (currentBlock.HasValue && !isCurrentBlockNonEmpty)
                         {
-                            throw new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should not be empty"));
+                            exceptions.Add(new FormatException(string.Format(exMessageTemplate, $"{_keyWords[blockIndex - 1]} block should not be empty")));
                         }
 
                         currentBlock = new KeyValuePair<int, string>(blockIndex, line.ToUpper());
@@ -107,7 +127,7 @@ namespace LilaApp
                     // Нету объявляения блока
                     if (currentBlock == null)
                     {
-                        throw new FormatException(string.Format(exMessageTemplate, $"Wrong block declaration. It is should be one of ({string.Join(",", _keyWords)})"));
+                        exceptions.Add(new FormatException(string.Format(exMessageTemplate, $"Wrong block declaration. It is should be one of ({string.Join(",", _keyWords)})")));
                     }
 
                     if (line.Equals(END_BLOCK_SIGN))
@@ -142,14 +162,14 @@ namespace LilaApp
 
                             if (!int.TryParse(data[1], out int count))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The second argument should consist of integer numbers only"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The second argument should consist of integer numbers only")));
                             }
 
                             digitNotLessThan(count, 0, string.Format(wrongArgFormatExTemplate, "The second argument {0}"));
 
                             if (!double.TryParse(data[2], out double price))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of numbers only"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of numbers only")));
                             }
 
                             digitNotLessThan(price, 0, string.Format(wrongArgFormatExTemplate, "The third argument {0}"));
@@ -158,7 +178,7 @@ namespace LilaApp
 
                             if (elementsCount > MAX_ELEMENTS_RESTRICTION)
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of elements cannot be more than {MAX_ELEMENTS_RESTRICTION}"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of elements cannot be more than {MAX_ELEMENTS_RESTRICTION}")));
                             }
 
                             model.Blocks.Add(new Block(dataPointName, count, price));
@@ -173,34 +193,36 @@ namespace LilaApp
                             }
 
                             break;
+
                         case ROUTE_KEY_WORD:
                             checkBlockLength(ROUTE_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
 
                             if (!double.TryParse(data[0], out double xCoor))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"X\" coordinate should be numeric"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The \"X\" coordinate should be numeric")));
                             }
 
                             if (!double.TryParse(data[1], out double yCoor))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric")));
                             }
 
                             if ((model.Points.Count == 0) && (xCoor != 0) && (yCoor != 0))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\""));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\"")));
                             }
 
                             pointsCount++;
 
                             if (pointsCount > MAX_POINTS_RESTRICTION)
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}")));
                             }
 
                             model.Points.Add(new Point(xCoor, yCoor));
 
                             break;
+
                         case ORDER_KEY_WORD:
                             checkBlockLength(ORDER_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
 
@@ -212,31 +234,32 @@ namespace LilaApp
                             _orderBlockCache.Add(lineNum, orderPointName);
 
                             break;
+
                         case TOP_KEY_WORD:
                             checkBlockLength(TOP_BLOCK_ARGC, data.Length, currentBlock.Value.Value, wrongArgcExTemplate);
 
                             if (!int.TryParse(data[0], out int firstBlock))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The first argument should consist of integer numbers only"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The first argument should consist of integer numbers only")));
                             }
 
                             digitNotLessThan(firstBlock, 0, string.Format(wrongArgFormatExTemplate, "The first argument {0}"));
 
                             if (!int.TryParse(data[1], out int secondBlock))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"The second argument should be numeric"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"The second argument should be numeric")));
                             }
 
                             digitNotLessThan(secondBlock, 0, string.Format(wrongArgFormatExTemplate, "The second argument {0}"));
 
                             if (!int.TryParse(data[2], out int direction))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of integer numbers only"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The third argument should consist of integer numbers only")));
                             }
 
                             if (!_directions.Contains(direction))
                             {
-                                throw new FormatException(string.Format(wrongArgFormatExTemplate, $"Direction should be one of ({string.Join(", ", _directions)})"));
+                                exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Direction should be one of ({string.Join(", ", _directions)})")));
                             }
 
                             var topology = new TopologyItem(firstBlock, secondBlock, direction);
@@ -245,9 +268,11 @@ namespace LilaApp
                             _topBlockCache.Add(lineNum, topology);
 
                             break;
+
                         // Этот код в теории должен быть недостижим
                         default:
-                            throw new Exception(string.Format(exMessageTemplate, $"What a heck??? Line text: {line}"));
+                            exceptions.Add(new Exception(string.Format(exMessageTemplate, $"What a heck??? Line text: {line}")));
+                            break;
                     }
 
                     isCurrentBlockNonEmpty = true;
@@ -257,7 +282,7 @@ namespace LilaApp
 
                 if (!string.IsNullOrEmpty(reachedBlockExMessage))
                 {
-                    throw new FormatException($"Blocks missing: {reachedBlockExMessage}");
+                    exceptions.Add(new FormatException($"Blocks missing: {reachedBlockExMessage}"));
                 }
 
                 // Создаём копию для работы
@@ -270,14 +295,14 @@ namespace LilaApp
 
                     if (!dataBlockCacheCopy.ContainsKey(order.Value))
                     {
-                        throw new FormatException(string.Format(orderExTemplate, $"{order.Value} element does not exists in {DATA_KEY_WORD} block"));
+                        exceptions.Add(new FormatException(string.Format(orderExTemplate, $"{order.Value} element does not exists in {DATA_KEY_WORD} block")));
                     }
 
                     dataBlockCacheCopy[order.Value]--;
 
                     if (dataBlockCacheCopy[order.Value] < 0)
                     {
-                        throw new FormatException(string.Format(orderExTemplate, $"Count of {order.Value} element cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[order.Value]}"));
+                        exceptions.Add(new FormatException(string.Format(orderExTemplate, $"Count of {order.Value} element cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[order.Value]}")));
                     }
                 }
 
@@ -293,40 +318,40 @@ namespace LilaApp
 
                         if (topZeroCount > REQUIRED_NUM_OF_ZEROS)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"Connection with zero element cannot be more than {REQUIRED_NUM_OF_ZEROS}"));
+                            exceptions.Add(new FormatException(string.Format(routeExTemplate, $"Connection with zero element cannot be more than {REQUIRED_NUM_OF_ZEROS}")));
                         }
                     }
                     else
                     {
                         if (top.Value.FirstBlock > model.Order.Count)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.FirstBlock} id does not exists in {ORDER_KEY_WORD} block"));
+                            exceptions.Add(new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.FirstBlock} id does not exists in {ORDER_KEY_WORD} block")));
                         }
 
                         if (top.Value.SecondBlock > model.Order.Count)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.SecondBlock} id does not exists in {ORDER_KEY_WORD} block"));
+                            exceptions.Add(new FormatException(string.Format(routeExTemplate, $"First arg element with {top.Value.SecondBlock} id does not exists in {ORDER_KEY_WORD} block")));
                         }
 
                         var blockName = model.Order[top.Value.SecondBlock - 1];
 
                         if (!_dataBlockCache.ContainsKey(blockName))
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"{blockName} element does not exists in {DATA_KEY_WORD} block"));
+                            exceptions.Add(new FormatException(string.Format(routeExTemplate, $"{blockName} element does not exists in {DATA_KEY_WORD} block")));
                         }
 
                         _dataBlockCache[blockName]--;
 
                         if (_dataBlockCache[blockName] < 0)
                         {
-                            throw new FormatException(string.Format(routeExTemplate, $"Count of {blockName} elements cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[blockName]}"));
+                            exceptions.Add(new FormatException(string.Format(routeExTemplate, $"Count of {blockName} elements cannot be more than specified in {DATA_KEY_WORD} block - {_dataBlockCache[blockName]}")));
                         }
                     }
                 }
 
                 if (topZeroCount != REQUIRED_NUM_OF_ZEROS)
                 {
-                    throw new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}"));
+                    exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}")));
                 }
 
                 // Проверка, что все элементы из блока ORDER используются не больше двух (для Y - трёх) раз
@@ -337,11 +362,11 @@ namespace LilaApp
                     // Превышено допустимое количество использования блока
                     if (orderElemetnsAvaliableConnections[top.Value.FirstBlock]-- < 0)
                     {
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.FirstBlock} usage exceeded"));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.FirstBlock} usage exceeded")));
                     }
                     if (orderElemetnsAvaliableConnections[top.Value.SecondBlock]-- < 0)
                     {
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.SecondBlock} usage exceeded"));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, top.Key, $"Block №{top.Value.SecondBlock} usage exceeded")));
                     }
                 }
 
@@ -351,20 +376,20 @@ namespace LilaApp
                 {
                     var orderLine = orderBlockKeys[i];
                     var element = _orderBlockCache[orderLine];
-                    var usageCount = orderElemetnsAvaliableConnections[i];
+                    var usageCount = orderElemetnsAvaliableConnections[i+1];
 
                     if (usageCount >= 2)
                     {
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) isn't used in {TOP_KEY_WORD} block"));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i+1} in {ORDER_KEY_WORD} block) isn't used in {TOP_KEY_WORD} block")));
                     }
                     // У блока Y может быть 1 неиспользованное соединение, у остальных блоков - нет
                     else if (usageCount == 1 && !element.StartsWith("Y"))
                     {
-                        throw new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block"));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i+1} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block")));
                     }
                 }
 
-                return model;
+                return new Tuple<Model, Exception[]>(model, exceptions.ToArray());
             }
             finally
             {
