@@ -98,6 +98,23 @@ namespace Lilabu.Views
                     grid_Map.Children.Add(path);
                 }
 
+                void AddEllipse(Point p1)
+                {
+                    var x1 = padding + multiplier * (p1.X - minPoint.X);
+                    var y1 = padding + multiplier * (p1.Y - minPoint.Y);
+
+                    var size = 0.3 * multiplier;
+
+                    grid_Map.Children.Add(new Ellipse() { 
+                        Width = size, 
+                        Height = size, 
+                        Fill = Brushes.Blue, 
+                        Margin = new Thickness(x1 - size / 2, y1 - size / 2, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                    });
+                }
+
                 // Сетка
                 for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
                     AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
@@ -125,6 +142,12 @@ namespace Lilabu.Views
                     }
                 }
 
+                // Точки маршрута
+
+                foreach(var route in MainVM.Model.Points)
+                {
+                    AddEllipse(route);
+                }
             }
         }
 
