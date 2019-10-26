@@ -349,11 +349,6 @@ namespace LilaApp
                     }
                 }
 
-                if (topZeroCount != REQUIRED_NUM_OF_ZEROS)
-                {
-                    exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}")));
-                }
-
                 // Проверка, что все элементы из блока ORDER используются не больше двух (для Y - трёх) раз
                 var orderElemetnsAvaliableConnections = model.Order.Select((item, index) => item.StartsWith("Y") ? 3 : 2).ToList();
                 orderElemetnsAvaliableConnections.Insert(0, 2);
@@ -387,6 +382,12 @@ namespace LilaApp
                     {
                         exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i+1} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block")));
                     }
+                }
+
+                // Проверка количества соединений с нулевым элементом
+                if (topZeroCount != REQUIRED_NUM_OF_ZEROS)
+                {
+                    exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}")));
                 }
 
                 return new Tuple<Model, Exception[]>(model, exceptions.ToArray());
