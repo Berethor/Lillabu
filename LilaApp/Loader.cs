@@ -207,6 +207,11 @@ namespace LilaApp
                                 exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, "The \"Y\" coordinate should be numeric")));
                             }
 
+                            if (!double.TryParse(data[2], out double pointPrice))
+                            {
+                                throw new FormatException(string.Format(wrongArgFormatExTemplate, "The price should be numeric"));
+                            }
+
                             if ((model.Points.Count == 0) && (xCoor != 0) && (yCoor != 0))
                             {
                                 exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"{ROUTE_KEY_WORD} block should starts with \"0 0\"")));
@@ -219,7 +224,7 @@ namespace LilaApp
                                 exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}")));
                             }
 
-                            model.Points.Add(new Point(xCoor, yCoor));
+                            model.Points.Add(new Point(xCoor, yCoor, price = pointPrice));
 
                             break;
 

@@ -11,12 +11,15 @@ namespace LilaApp.Models
         public double Y { get; set; }
 
         public double Angle { get; set; }
-        
-        public Point(double x, double y, double angle = 0)
+
+        public double Price { get; set; }
+
+        public Point(double x, double y, double angle = 0, double price = 0)
         {
             X = x;
             Y = y;
             Angle = angle;
+            Price = price;
         }
 
         public string StringValue => $"{Math.Round(X, 10)} {Math.Round(Y, 10)} ({Math.Round(Angle, 10)})";
