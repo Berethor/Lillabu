@@ -6,6 +6,19 @@ namespace LilaApp.Algorithm
 {
     public static class MathFunctions
     {
+        public static double GetDistanceToPoint(Point point, Point waypoint)
+        {
+            return Math.Sqrt(
+                Math.Pow(waypoint.X - point.X, 2) +
+                Math.Pow(waypoint.Y - point.Y, 2));
+        }
+
+        public static double GetWaypointPrice(double pointImportance, Point point, Point waypoint)
+        {
+            return pointImportance /
+                (1 + GetDistanceToPoint(point, waypoint));
+        }
+
         public static bool CheckSegment(Point point, Point startPoint, Point endPoint)
         {
             var t = ((point.X - startPoint.X) * (endPoint.X - startPoint.X) +
@@ -25,6 +38,7 @@ namespace LilaApp.Algorithm
                 return false;
             }
         }
+
         public static bool CheckTurn(Point point, Point center, Point startPoint, Point endPoint,double angle, double r)
         {
             var distanceToCircle = Math.Abs(
