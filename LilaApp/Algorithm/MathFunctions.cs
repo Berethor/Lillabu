@@ -6,17 +6,10 @@ namespace LilaApp.Algorithm
 {
     public static class MathFunctions
     {
-        public static double GetDistanceToPoint(Point point, Point waypoint)
+        public static double GetWaypointPrice(Point detailPoint, Point waypoint)
         {
-            return Math.Sqrt(
-                Math.Pow(waypoint.X - point.X, 2) +
-                Math.Pow(waypoint.Y - point.Y, 2));
-        }
-
-        public static double GetWaypointPrice(double pointImportance, Point point, Point waypoint)
-        {
-            return pointImportance /
-                (1 + GetDistanceToPoint(point, waypoint));
+            return waypoint.Price /
+                (1 + GetDistanceToPoint(detailPoint, waypoint));
         }
 
         public static bool CheckSegment(Point point, Point startPoint, Point endPoint)
@@ -77,6 +70,12 @@ namespace LilaApp.Algorithm
                 x: point.X * Math.Cos(angle) + point.Y * Math.Sin(angle),
                 y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
             );
+        }
+        private static double GetDistanceToPoint(Point detailPoint, Point waypoint)
+        {
+            return Math.Sqrt(
+                Math.Pow(waypoint.X - detailPoint.X, 2) +
+                Math.Pow(waypoint.Y - detailPoint.Y, 2));
         }
     }
 }

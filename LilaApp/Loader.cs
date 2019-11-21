@@ -224,7 +224,7 @@ namespace LilaApp
                                 exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}")));
                             }
 
-                            model.Points.Add(new Point(xCoor, yCoor, price = pointPrice));
+                            model.Points.Add(new Point(xCoor, yCoor, price:pointPrice));
 
                             break;
 
@@ -461,7 +461,7 @@ namespace LilaApp
         #region Private Constants
 
         // Думаю, что это можно (но не обязательно) будет в конфиг файл завернуть
-        private const string ALLOWED_CHARS = "LTY";
+        private const string ALLOWED_CHARS = "LTYB";
 
         private const int REQUIRED_NUM_OF_ZEROS = 2;
 
@@ -471,7 +471,7 @@ namespace LilaApp
         private const string TOP_KEY_WORD = "TOP";
 
         private const int DATA_BLOCK_ARGC = 3;
-        private const int ROUTE_BLOCK_ARGC = 2;
+        private const int ROUTE_BLOCK_ARGC = 3;
         private const int ORDER_BLOCK_ARGC = 1;
         private const int TOP_BLOCK_ARGC = 3;
 

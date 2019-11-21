@@ -57,6 +57,8 @@ namespace Lilabu.ViewModels
                     TraceMapVm.Points = trace.Points;
 
                     Output = string.Join("\r\n", errors.Select(error => error.Message));
+
+                    Output += "\r\n Route Price: " + DirectTaskSolver.GetRoutePrice(Model, trace.Points);
                 }
                 catch (Exception exception)
                 {
