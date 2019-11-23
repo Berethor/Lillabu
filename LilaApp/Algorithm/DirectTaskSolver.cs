@@ -20,7 +20,7 @@ namespace LilaApp.Algorithm
                 routePrice += income;
             }
 
-            return routePrice;
+            return Math.Round(routePrice, 10);
         }
     }
 }
