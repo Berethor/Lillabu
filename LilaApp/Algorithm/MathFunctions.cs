@@ -6,7 +6,13 @@ namespace LilaApp.Algorithm
 {
     public static class MathFunctions
     {
-        public static double GetWaypointPrice(Point detailPoint, Point waypoint)
+        /// <summary>
+        /// Прибыль с точки маршрута
+        /// </summary>
+        /// <param name="detailPoint">Точка стыка детали</param>
+        /// <param name="waypoint">Точка маршрута</param>
+        /// <returns></returns>
+        public static double GetWaypointIncome(Point detailPoint, Point waypoint)
         {
             return waypoint.Price /
                 (1 + GetDistanceToPoint(detailPoint, waypoint));

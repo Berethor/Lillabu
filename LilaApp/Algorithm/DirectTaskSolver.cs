@@ -1,34 +1,33 @@
 ﻿using System;
 
-using LilaApp.Models;
-using static LilaApp.Algorithm.TraceBuilder;
-
 namespace LilaApp.Algorithm
 {
+    using Models;
+
     public static class DirectTaskSolver
     {
         public static double GetRoutePrice(Model taskModel, Point[] detailsPoints)
         {
-            double routePrice = 0;
+            var routePrice = 0.0;
 
             foreach (var waypoint in taskModel.Points)
             {
-                double waypointPrice = MathFunctions.GetWaypointPrice(detailsPoints[0], waypoint);
+                var waypointIncome = MathFunctions.GetWaypointIncome(detailsPoints[0], waypoint);
 
-                foreach(var detailPoint in detailsPoints)
+                foreach (var detailPoint in detailsPoints)
                 {
-                    var price = MathFunctions.GetWaypointPrice(detailPoint, waypoint);
+                    var income = MathFunctions.GetWaypointIncome(detailPoint, waypoint);
 
-                    if (waypointPrice > price)
+                    if (income > waypointIncome)
                     {
-                        waypointPrice = price;
+                        waypointIncome = income;
                     }
                 }
 
-                routePrice += waypointPrice;
+                routePrice += waypointIncome;
             }
 
-            return routePrice;
+            return Math.Round(routePrice, 8);
         }
     }
 }

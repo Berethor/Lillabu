@@ -68,10 +68,18 @@ namespace LilaApp.Algorithm
                 points[current] = endPoint;
             }
 
+            // Вычисляем стоимость всех деталей
+            double price = 0;
+            foreach(var detail in model.Order)
+            {
+                price += model.Blocks.Find(_ => _.Name == detail).Price;
+            }
+
             return new Result
             {
                 Points = points,
                 Forks = forks,
+                Price = price,
             };
         }
 
@@ -123,7 +131,14 @@ namespace LilaApp.Algorithm
             /// </summary>
             public Point[] Points { get; set; }
 
+            [Obsolete("Устарело в связи с удалением Y блоков")]
             public Dictionary<int, Fork> Forks { get; set; }
+
+            /// <summary>
+            /// Стоимость всех деталей
+            /// </summary>
+            public double Price { get; set; }
+            
         }
     }
 

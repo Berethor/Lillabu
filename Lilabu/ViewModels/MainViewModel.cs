@@ -58,7 +58,11 @@ namespace Lilabu.ViewModels
 
                     Output = string.Join("\r\n", errors.Select(error => error.Message));
 
-                    Output += "\r\n Route Price: " + DirectTaskSolver.GetRoutePrice(Model, trace.Points);
+                    var income = DirectTaskSolver.GetRoutePrice(Model, trace.Points);
+
+                    Output += $"\r\n Route Income: {income}";
+                    Output += $"\r\n Blocks Price: {trace.Price}";
+                    Output += $"\r\n Result Cost: {income - trace.Price}";
                 }
                 catch (Exception exception)
                 {
