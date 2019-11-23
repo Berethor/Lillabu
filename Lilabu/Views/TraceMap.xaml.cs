@@ -134,9 +134,9 @@ namespace Lilabu.Views
                     AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
 
                 // Ось OY
-                AddLine(new Point(0, 0), new Point(0, 0.95), Brushes.Black);
-                AddLine(new Point(0.2, 0.8), new Point(-0.0333, 1), Brushes.Black);
-                AddLine(new Point(-0.2, 0.8), new Point(0.0333, 1), Brushes.Black);
+                AddLine(new Point(0, 0), new Point(0, 1), Brushes.Black, 0.5);
+                AddLine(new Point(0.2, 0.8), new Point(0, 1), Brushes.Black, 0.5);
+                AddLine(new Point(-0.2, 0.8), new Point(0, 1), Brushes.Black, 0.5);
 
                 // Трасса
                 for (var i = 0; i < points.Length - 1 && i < MainVM.Model.Order.Count; i++)

@@ -21,7 +21,7 @@ namespace LilaApp.Algorithm
 
             var n = model.Topology.Count;
 
-            var points = new Point?[n + 1];
+            var points = new Point?[n];
             points[0] = new Point(0, 0);
 
             // var forks = new Dictionary<int, Fork>();
@@ -106,7 +106,7 @@ namespace LilaApp.Algorithm
                 price += model.Blocks.FirstOrDefault(_ => _.Name == detail)?.Price ?? 0;
             }
 
-            var nonNullablePoints = points.Select(point => point ?? new Point()).ToArray();
+            var nonNullablePoints = points.Select(point => (Point)point).ToArray();
 
             return new Result
             {
