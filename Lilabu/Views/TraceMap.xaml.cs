@@ -105,10 +105,11 @@ namespace Lilabu.Views
 
                     var size = 0.3 * multiplier;
 
-                    grid_Map.Children.Add(new Ellipse() { 
-                        Width = size, 
-                        Height = size, 
-                        Fill = Brushes.Blue, 
+                    grid_Map.Children.Add(new Ellipse()
+                    {
+                        Width = size,
+                        Height = size,
+                        Fill = Brushes.Blue,
                         Margin = new Thickness(x1 - size / 2, y1 - size / 2, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
@@ -127,7 +128,7 @@ namespace Lilabu.Views
                 AddLine(new Point(-0.2, 0.8), new Point(0.0333, 1), Brushes.Black);
 
                 // Трасса
-                for (var i = 0; i < points.Length - 1; i++)
+                for (var i = 0; i < points.Length - 1 && i < MainVM.Model.Order.Count; i++)
                 {
                     if (MainVM.Model.Order[i].StartsWith("T"))
                     {
@@ -144,7 +145,7 @@ namespace Lilabu.Views
 
                 // Точки маршрута
 
-                foreach(var route in MainVM.Model.Points)
+                foreach (var route in MainVM.Model.Points)
                 {
                     AddEllipse(route);
                 }
