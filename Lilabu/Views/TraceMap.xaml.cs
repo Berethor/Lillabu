@@ -51,6 +51,13 @@ namespace Lilabu.Views
                     if (point.X > maxPoint.X) maxPoint.X = point.X;
                     if (point.Y > maxPoint.Y) maxPoint.Y = point.Y;
                 }
+                foreach(var point in MainVM.Model.Points)
+                {
+                    if (point.X < minPoint.X) minPoint.X = point.X;
+                    if (point.Y < minPoint.Y) minPoint.Y = point.Y;
+                    if (point.X > maxPoint.X) maxPoint.X = point.X;
+                    if (point.Y > maxPoint.Y) maxPoint.Y = point.Y;
+                }
 
                 const int padding = 10;
                 const int multiplier = 10;
