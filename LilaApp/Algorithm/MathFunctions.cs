@@ -12,10 +12,10 @@ namespace LilaApp.Algorithm
         /// <param name="detailPoint">Точка стыка детали</param>
         /// <param name="waypoint">Точка маршрута</param>
         /// <returns></returns>
-        public static double GetWaypointIncome(Point detailPoint, Point waypoint)
+        public static double GetWaypointIncome(double length, double price)
         {
-            return waypoint.Price /
-                (1 + GetDistanceToPoint(detailPoint, waypoint));
+            return price /
+                (1 + length);
         }
 
         public static bool CheckSegment(Point point, Point startPoint, Point endPoint)
@@ -77,7 +77,7 @@ namespace LilaApp.Algorithm
                 y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
             );
         }
-        private static double GetDistanceToPoint(Point detailPoint, Point waypoint)
+        public static double GetDistanceToPoint(Point detailPoint, Point waypoint)
         {
             return Math.Sqrt(
                 Math.Pow(waypoint.X - detailPoint.X, 2) +

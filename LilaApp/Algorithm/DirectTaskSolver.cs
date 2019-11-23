@@ -12,19 +12,20 @@ namespace LilaApp.Algorithm
 
             foreach (var waypoint in taskModel.Points)
             {
-                var waypointIncome = MathFunctions.GetWaypointIncome(detailsPoints[0], waypoint);
+                var waypointLength = MathFunctions.GetDistanceToPoint(detailsPoints[0], waypoint);
 
                 foreach (var detailPoint in detailsPoints)
                 {
-                    var income = MathFunctions.GetWaypointIncome(detailPoint, waypoint);
+                    var length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
 
-                    if (income > waypointIncome)
+                    if (length < waypointLength)
                     {
-                        waypointIncome = income;
+                        waypointLength = length;
                     }
                 }
 
-                routePrice += waypointIncome;
+                var income = MathFunctions.GetWaypointIncome(waypointLength, waypoint.Price);
+                routePrice += income;
             }
 
             return Math.Round(routePrice, 8);
