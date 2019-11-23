@@ -6,6 +6,18 @@ namespace LilaApp.Algorithm
 {
     public static class MathFunctions
     {
+        /// <summary>
+        /// Прибыль с точки маршрута
+        /// </summary>
+        /// <param name="detailPoint">Точка стыка детали</param>
+        /// <param name="waypoint">Точка маршрута</param>
+        /// <returns></returns>
+        public static double GetWaypointIncome(Point detailPoint, Point waypoint)
+        {
+            return waypoint.Price /
+                (1 + GetDistanceToPoint(detailPoint, waypoint));
+        }
+
         public static bool CheckSegment(Point point, Point startPoint, Point endPoint)
         {
             var t = ((point.X - startPoint.X) * (endPoint.X - startPoint.X) +
@@ -25,6 +37,7 @@ namespace LilaApp.Algorithm
                 return false;
             }
         }
+
         public static bool CheckTurn(Point point, Point center, Point startPoint, Point endPoint,double angle, double r)
         {
             var distanceToCircle = Math.Abs(
@@ -63,6 +76,12 @@ namespace LilaApp.Algorithm
                 x: point.X * Math.Cos(angle) + point.Y * Math.Sin(angle),
                 y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
             );
+        }
+        private static double GetDistanceToPoint(Point detailPoint, Point waypoint)
+        {
+            return Math.Sqrt(
+                Math.Pow(waypoint.X - detailPoint.X, 2) +
+                Math.Pow(waypoint.Y - detailPoint.Y, 2));
         }
     }
 }
