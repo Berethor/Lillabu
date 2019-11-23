@@ -10,6 +10,7 @@ using WinPoint = System.Windows.Point;
 
 namespace Lilabu.Views
 {
+    using LilaApp.Algorithm;
     using ViewModels;
 
     public partial class TraceMap : UserControl
@@ -145,6 +146,24 @@ namespace Lilabu.Views
                     {
                         // Рисуем линию
                         AddLine(points[i], points[i + 1], Brushes.Red);
+
+                        if (block.StartsWith("B"))
+                        {
+                            var rotatedPoint = MathFunctions.RotateCoordinates(points[i].Angle, points[i]);
+                            rotatedPoint.Y += 1.5;
+                            rotatedPoint.X += 0.2;
+                            var p1 = MathFunctions.RotateCoordinates(-points[i].Angle, rotatedPoint);
+                            rotatedPoint.Y += 1;
+                            var p2 = MathFunctions.RotateCoordinates(-points[i].Angle, rotatedPoint);
+                            rotatedPoint.X -= 0.2 * 2;
+                            var p4 = MathFunctions.RotateCoordinates(-points[i].Angle, rotatedPoint);
+                            rotatedPoint.Y -= 1;
+                            var p3 = MathFunctions.RotateCoordinates(-points[i].Angle, rotatedPoint);
+
+                            // Рисуем линии моста
+                            AddLine(p1, p2, Brushes.Black, thickness: 0.5);
+                            AddLine(p3, p4, Brushes.Black, thickness: 0.5);
+                        }
                     }
 
                     // Рисуем точку стыка
