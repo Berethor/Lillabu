@@ -62,6 +62,7 @@ namespace Lilabu.Views
 
                 grid_Map.Children.Clear();
 
+                // Отрисовка линии
                 void AddLine(Point p1, Point p2, Brush color, double thickness = 1)
                 {
                     grid_Map.Children.Add(new Line
@@ -75,6 +76,7 @@ namespace Lilabu.Views
                     });
                 }
 
+                // Отрисовка дуги
                 void AddArc(Point p1, Point p2, int direction)
                 {
                     const double radius = 3;
@@ -98,18 +100,19 @@ namespace Lilabu.Views
                     grid_Map.Children.Add(path);
                 }
 
-                void AddEllipse(Point p1)
+                // Открисовка круга
+                void AddEllipse(Point p1, Brush color, double diameter = 0.3)
                 {
                     var x1 = padding + multiplier * (p1.X - minPoint.X);
                     var y1 = padding + multiplier * (p1.Y - minPoint.Y);
 
-                    var size = 0.3 * multiplier;
+                    var size = diameter * multiplier;
 
                     grid_Map.Children.Add(new Ellipse()
                     {
                         Width = size,
                         Height = size,
-                        Fill = Brushes.Blue,
+                        Fill = color,
                         Margin = new Thickness(x1 - size / 2, y1 - size / 2, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
@@ -130,7 +133,9 @@ namespace Lilabu.Views
                 // Трасса
                 for (var i = 0; i < points.Length - 1 && i < MainVM.Model.Order.Count; i++)
                 {
-                    if (MainVM.Model.Order[i].StartsWith("T"))
+                    var block = MainVM.Model.Order[i];
+
+                    if (block.StartsWith("T"))
                     {
                         // Рисуем дугу
                         var direction = MainVM.Model.Topology[i].Direction;
@@ -141,13 +146,16 @@ namespace Lilabu.Views
                         // Рисуем линию
                         AddLine(points[i], points[i + 1], Brushes.Red);
                     }
+
+                    // Рисуем точку стыка
+                    AddEllipse(points[i], Brushes.Red, 0.2);
                 }
 
                 // Точки маршрута
 
                 foreach (var route in MainVM.Model.Points)
                 {
-                    AddEllipse(route);
+                    AddEllipse(route, Brushes.Blue);
                 }
             }
         }
