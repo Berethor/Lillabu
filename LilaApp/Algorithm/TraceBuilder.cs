@@ -47,7 +47,9 @@ namespace LilaApp.Algorithm
                 switch (t2[0])
                 {
                     case 'L':
-                        rotatedPoint.Y += int.Parse(t2.Substring(1));
+                    case 'B':
+                        // Добавляем длину блока: для L* - от 1 до 4, для B* - 4
+                        rotatedPoint.Y += t2[0] == 'L' ? int.Parse(t2.Substring(1)) : 4;
                         endPoint = Rotate(rotatedPoint, -angle);
                         endPoint.Angle = startPoint.Angle;
                         break;
