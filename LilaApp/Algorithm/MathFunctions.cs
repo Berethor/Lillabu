@@ -9,13 +9,12 @@ namespace LilaApp.Algorithm
         /// <summary>
         /// Прибыль с точки маршрута
         /// </summary>
-        /// <param name="detailPoint">Точка стыка детали</param>
-        /// <param name="waypoint">Точка маршрута</param>
+        /// <param name="double">Расстояние до точки</param>
+        /// <param name="price">Прибыль с точки</param>
         /// <returns></returns>
         public static double GetWaypointIncome(double length, double price)
         {
-            return price /
-                (1 + length);
+            return price / (1 + length);
         }
 
         public static bool CheckSegment(Point point, Point startPoint, Point endPoint)

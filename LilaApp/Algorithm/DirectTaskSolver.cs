@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace LilaApp.Algorithm
 {
@@ -12,23 +13,14 @@ namespace LilaApp.Algorithm
 
             foreach (var waypoint in taskModel.Points)
             {
-                var waypointLength = MathFunctions.GetDistanceToPoint(detailsPoints[0], waypoint);
+                var length = detailsPoints.Min(detailPoint => MathFunctions.GetDistanceToPoint(detailPoint, waypoint));
 
-                foreach (var detailPoint in detailsPoints)
-                {
-                    var length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
+                var income = MathFunctions.GetWaypointIncome(length, waypoint.Price);
 
-                    if (length < waypointLength)
-                    {
-                        waypointLength = length;
-                    }
-                }
-
-                var income = MathFunctions.GetWaypointIncome(waypointLength, waypoint.Price);
                 routePrice += income;
             }
 
-            return Math.Round(routePrice, 8);
+            return Math.Round(routePrice, 12);
         }
     }
 }
