@@ -26,11 +26,22 @@ namespace LilaApp.Models
 
         public override bool Equals(object obj)
         {
+            if (!(obj is Point))
+            {
+                return false;
+            }
+
+            var other = (Point)obj;
+
             return
-                (obj is Point) &&
-                ((Point)obj).X == this.X &&
-                ((Point)obj).Y == this.Y &&
-                ((Point)obj).Angle == this.Angle;
+                Math.Round(other.X, 12) == Math.Round(this.X, 12) &&
+                Math.Round(other.Y, 12) == Math.Round(this.Y, 12) &&
+                Math.Round(other.Angle, 12) == Math.Round(this.Angle, 12);
+        }
+
+        public override string ToString()
+        {
+            return $"{StringValue}";
         }
     }
 }

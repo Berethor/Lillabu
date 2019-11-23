@@ -19,5 +19,10 @@ namespace LilaApp.Models
             SecondBlock = secondBlock;
             Direction = direction;
         }
+
+        public override string ToString()
+        {
+            return $"{FirstBlock} {SecondBlock} {Direction}";
+        }
     }
 }

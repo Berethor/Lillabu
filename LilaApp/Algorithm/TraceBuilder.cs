@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace LilaApp.Algorithm
 {
     using Models;
+    using System.Linq;
 
     /// <summary>
     /// Класс для вычисления координат блоков маршрута
@@ -16,12 +17,14 @@ namespace LilaApp.Algorithm
         /// <param name="model">Полная модель</param>
         public static Result CalculateTrace(Model model)
         {
+            var exceptions = new List<Exception>();
+
             var n = model.Topology.Count;
 
-            var points = new Point[n + 1];
+            var points = new Point?[n + 1];
             points[0] = new Point(0, 0);
 
-            var forks = new Dictionary<int, Fork>();
+            // var forks = new Dictionary<int, Fork>();
 
             for (var i = 0; i < n; i++)
             {
@@ -35,9 +38,17 @@ namespace LilaApp.Algorithm
                 var t2 = current > 0 ? model.Order[current - 1] : "L0";
 
                 // Извлечение начальной точки
-                var startPoint = (t1[0] == 'Y')
-                    ? forks[previos][direction]
-                    : points[previos];
+
+                //var startPoint = t1[0] == 'Y')
+                //    ? forks[previos][direction]
+                //    : points[previos];
+
+                if (points[previos] == null)
+                {
+                    exceptions.Add(new Exception($"Ошибка в {i + 1} строке раздела TOP: \"{item}\". Нет информации о точке начала блока №{previos}({t2})"));
+                    break;
+                }
+                var startPoint = (Point)points[previos];
 
                 var angle = startPoint.Angle;
 
@@ -47,9 +58,12 @@ namespace LilaApp.Algorithm
                 switch (t2[0])
                 {
                     case 'L':
+                        rotatedPoint.Y += int.Parse(t2.Substring(1));
+                        endPoint = Rotate(rotatedPoint, -angle);
+                        endPoint.Angle = startPoint.Angle;
+                        break;
                     case 'B':
-                        // Добавляем длину блока: для L* - от 1 до 4, для B* - 4
-                        rotatedPoint.Y += t2[0] == 'L' ? int.Parse(t2.Substring(1)) : 4;
+                        rotatedPoint.Y += 4; // Длина моста - 4
                         endPoint = Rotate(rotatedPoint, -angle);
                         endPoint.Angle = startPoint.Angle;
                         break;
@@ -61,9 +75,24 @@ namespace LilaApp.Algorithm
                         endPoint.Angle = startPoint.Angle - direction * alpha;
                         break;
                     case 'Y':
-                        forks[current] = MakeFork(startPoint, angle, direction);
-                        endPoint = forks[current].Base;
+                        // forks[current] = MakeFork(startPoint, angle, direction);
+                        // endPoint = forks[current].Base;
                         break;
+                }
+
+                if (endPoint.Angle < 0)
+                {
+                    endPoint.Angle += 2 * Math.PI;
+                }
+                else if (endPoint.Angle >= 2 * Math.PI)
+                {
+                    endPoint.Angle -= 2 * Math.PI;
+                }
+
+                if (points[current] != null && !((Point)points[current]).Equals(endPoint))
+                {
+                    exceptions.Add(new Exception($"Ошибка в {i + 1} строке раздела TOP: \"{item}\". Попытка перезаписи точки начала блока №{current}. Старая: {points[current]}, новая: {endPoint}"));
+                    break;
                 }
 
                 // Сохранение конечной точки
@@ -72,16 +101,19 @@ namespace LilaApp.Algorithm
 
             // Вычисляем стоимость всех деталей
             double price = 0;
-            foreach(var detail in model.Order)
+            foreach (var detail in model.Order)
             {
-                price += model.Blocks.Find(_ => _.Name == detail).Price;
+                price += model.Blocks.FirstOrDefault(_ => _.Name == detail)?.Price ?? 0;
             }
+
+            var nonNullablePoints = points.Select(point => point ?? new Point()).ToArray();
 
             return new Result
             {
-                Points = points,
-                Forks = forks,
+                Points = nonNullablePoints,
+                // Forks = forks,
                 Price = price,
+                Exceptions = exceptions,
             };
         }
 
@@ -95,6 +127,7 @@ namespace LilaApp.Algorithm
             return MathFunctions.RotateCoordinates(angle, new Point(x, y));
         }
 
+        [Obsolete("Устарело в связи с удалением Y блоков")]
         private static Fork MakeFork(Point point, double angle, int direction)
         {
             const double Y_LEN = Constants.Y_LENGTH;
@@ -133,14 +166,18 @@ namespace LilaApp.Algorithm
             /// </summary>
             public Point[] Points { get; set; }
 
-            [Obsolete("Устарело в связи с удалением Y блоков")]
-            public Dictionary<int, Fork> Forks { get; set; }
+            //[Obsolete("Устарело в связи с удалением Y блоков")]
+            //public Dictionary<int, Fork> Forks { get; set; }
 
             /// <summary>
             /// Стоимость всех деталей
             /// </summary>
             public double Price { get; set; }
-            
+
+            /// <summary>
+            /// Список ошибок
+            /// </summary>
+            public List<Exception> Exceptions { get; set; }
         }
     }
 

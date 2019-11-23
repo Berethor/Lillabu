@@ -1,9 +1,8 @@
-﻿using System;
-using System.Linq;
-using System.Windows;
-using LilaApp;
+﻿using LilaApp;
 using LilaApp.Algorithm;
 using LilaApp.Models;
+using System;
+using System.Linq;
 
 namespace Lilabu.ViewModels
 {
@@ -15,7 +14,7 @@ namespace Lilabu.ViewModels
         /// Заголовок
         /// </summary>
         public string Title { get => Get<string>(); set => Set(value); }
-        
+
         /// <summary>
         /// Текст вывода
         /// </summary>
@@ -39,6 +38,21 @@ namespace Lilabu.ViewModels
         #endregion
 
         /// <summary>
+        /// Записать текст в консоль вывода
+        /// </summary>
+        /// <param name="text">Строка вывода</param>
+        /// <param name="ignoreEmpty">Игнорировать пустые строки</param>
+        public void WriteLine(string text, bool ignoreEmpty = true)
+        {
+            Output += text;
+
+            if (!ignoreEmpty || !string.IsNullOrEmpty(text))
+            {
+                Output += "\r\n";
+            }
+        }
+
+        /// <summary>
         ///  Конструктор по-умолчанию
         /// </summary>
         public MainViewModel()
@@ -49,20 +63,22 @@ namespace Lilabu.ViewModels
             {
                 try
                 {
+                    Output = string.Empty;
+
                     var (model, errors) = new Loader().CheckAndParse(inputContent);
-                    var trace = TraceBuilder.CalculateTrace(model);
 
                     Model = model;
+                    WriteLine(string.Join("\r\n", errors.Select(error => error.Message)));
 
+                    var trace = TraceBuilder.CalculateTrace(model);
+                    WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
                     TraceMapVm.Points = trace.Points;
-
-                    Output = string.Join("\r\n", errors.Select(error => error.Message));
 
                     var income = DirectTaskSolver.GetRoutePrice(Model, trace.Points);
 
-                    Output += $"\r\n Route Income: {income}";
-                    Output += $"\r\n Blocks Price: {trace.Price}";
-                    Output += $"\r\n Result Cost: {income - trace.Price}";
+                    WriteLine($"Прибыль с точек маршрута: {income}");
+                    WriteLine($"Стоимость блоков: {trace.Price}");
+                    WriteLine($"Итого: {income - trace.Price}");
                 }
                 catch (Exception exception)
                 {
