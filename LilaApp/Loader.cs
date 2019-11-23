@@ -49,13 +49,14 @@ namespace LilaApp
         {
             var exceptions = new List<Exception>();
 
+            var model = new Model(MAX_ELEMENTS_RESTRICTION, MAX_POINTS_RESTRICTION);
+
             try
             {
                 var lines = text.Replace("\r", "").Split('\n');
 
-                var model = new Model(MAX_ELEMENTS_RESTRICTION, MAX_POINTS_RESTRICTION);
                 var blockReached = new Dictionary<string, bool>();
-                
+
                 int elementsCount = 0;
                 int pointsCount = 0;
 
@@ -83,7 +84,7 @@ namespace LilaApp
                     }
                     line = line.Trim();
 
-                    // Пропускаем строки-комметарии
+                    // Пропускаем строки-комментарии
                     if (string.IsNullOrEmpty(line))
                     {
                         continue;
@@ -124,7 +125,7 @@ namespace LilaApp
                         continue;
                     }
 
-                    // Нету объявляения блока
+                    // Нет объявления блока
                     if (currentBlock == null)
                     {
                         exceptions.Add(new FormatException(string.Format(exMessageTemplate, $"Wrong block declaration. It is should be one of ({string.Join(",", _keyWords)})")));
@@ -224,7 +225,7 @@ namespace LilaApp
                                 exceptions.Add(new FormatException(string.Format(wrongArgFormatExTemplate, $"Count of points cannot be more than {MAX_POINTS_RESTRICTION}")));
                             }
 
-                            model.Points.Add(new Point(xCoor, yCoor, price:pointPrice));
+                            model.Points.Add(new Point(xCoor, yCoor, price: pointPrice));
 
                             break;
 
@@ -376,16 +377,16 @@ namespace LilaApp
                 {
                     var orderLine = orderBlockKeys[i];
                     var element = _orderBlockCache[orderLine];
-                    var usageCount = orderElemetnsAvaliableConnections[i+1];
+                    var usageCount = orderElemetnsAvaliableConnections[i + 1];
 
                     if (usageCount >= 2)
                     {
-                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i+1} in {ORDER_KEY_WORD} block) isn't used in {TOP_KEY_WORD} block")));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i + 1} in {ORDER_KEY_WORD} block) isn't used in {TOP_KEY_WORD} block")));
                     }
                     // У блока Y может быть 1 неиспользованное соединение, у остальных блоков - нет
                     else if (usageCount == 1 && !element.StartsWith("Y"))
                     {
-                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i+1} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block")));
+                        exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, orderLine, $"Element \"{element}\" (№{i + 1} in {ORDER_KEY_WORD} block) has not enough connections. It used only {usageCount} time in {TOP_KEY_WORD} block")));
                     }
                 }
 
@@ -394,16 +395,19 @@ namespace LilaApp
                 {
                     exceptions.Add(new FormatException(string.Format(EXCEPTION_TEMPLATE, _topBlockCache.Keys.Last(), $"Connection with zero element should be equals to {REQUIRED_NUM_OF_ZEROS}")));
                 }
-
-                return new Tuple<Model, Exception[]>(model, exceptions.ToArray());
+            }
+            catch (Exception exception)
+            {
+                exceptions.Add(exception);
             }
             finally
             {
                 clearDicts();
             }
+
+            return new Tuple<Model, Exception[]>(model, exceptions.ToArray());
         }
-        
-       
+
         private void digitNotLessThan(double digit, double num, string exTemplate)
         {
             if (digit < num)
@@ -484,7 +488,7 @@ namespace LilaApp
         private const int MAX_POINTS_RESTRICTION = 1000;
 
         private const string EXCEPTION_TEMPLATE = "Line {0}. Message: {1}";
-        
+
         #endregion Private Constants
     }
 
