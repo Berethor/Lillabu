@@ -12,6 +12,57 @@ namespace LilaApp.Algorithm
     public class TraceBuilder
     {
         /// <summary>
+        /// Добавить к точке деталь
+        /// </summary>
+        /// <param name="startPoint">Исходная точка</param>
+        /// <param name="item">Название детали</param>
+        /// <param name="direction">Направление (-1 - влево, +1 - вправо)</param>
+        /// <returns>Новая точка маршрута</returns>
+        public static Point MakeStep(Point startPoint, string item, int direction)
+        {
+            var angle = startPoint.Angle;
+
+            //Вычисление конечной точки
+            var rotatedPoint = Rotate(startPoint, angle);
+            var endPoint = startPoint;
+            switch (item[0])
+            {
+                case 'L':
+                    rotatedPoint.Y += int.Parse(item.Substring(1));
+                    endPoint = Rotate(rotatedPoint, -angle);
+                    endPoint.Angle = startPoint.Angle;
+                    break;
+                case 'B':
+                    rotatedPoint.Y += 4; // Длина моста - 4
+                    endPoint = Rotate(rotatedPoint, -angle);
+                    endPoint.Angle = startPoint.Angle;
+                    break;
+                case 'T':
+                    var alpha = Constants.T_ANGLES[item];
+                    rotatedPoint.X += direction * Constants.RADIUS * (1 - Math.Cos(alpha));
+                    rotatedPoint.Y += Constants.RADIUS * Math.Sin(alpha);
+                    endPoint = Rotate(rotatedPoint, -angle);
+                    endPoint.Angle = startPoint.Angle - direction * alpha;
+                    break;
+                case 'Y':
+                    // forks[current] = MakeFork(startPoint, angle, direction);
+                    // endPoint = forks[current].Base;
+                    break;
+            }
+
+            if (endPoint.Angle < 0)
+            {
+                endPoint.Angle += 2 * Math.PI;
+            }
+            else if (endPoint.Angle >= 2 * Math.PI)
+            {
+                endPoint.Angle -= 2 * Math.PI;
+            }
+
+            return endPoint;
+        }
+
+        /// <summary>
         /// Просчитать трассу модели
         /// </summary>
         /// <param name="model">Полная модель</param>
@@ -21,7 +72,7 @@ namespace LilaApp.Algorithm
 
             var n = model.Topology.Count;
 
-            var points = new Point?[n];
+            var points = new Point?[n+1];
             points[0] = new Point(0, 0);
 
             // var forks = new Dictionary<int, Fork>();
@@ -49,45 +100,8 @@ namespace LilaApp.Algorithm
                     break;
                 }
                 var startPoint = (Point)points[previos];
-
-                var angle = startPoint.Angle;
-
-                //Вычисление конечной точки
-                var rotatedPoint = Rotate(startPoint, angle);
-                var endPoint = startPoint;
-                switch (t2[0])
-                {
-                    case 'L':
-                        rotatedPoint.Y += int.Parse(t2.Substring(1));
-                        endPoint = Rotate(rotatedPoint, -angle);
-                        endPoint.Angle = startPoint.Angle;
-                        break;
-                    case 'B':
-                        rotatedPoint.Y += 4; // Длина моста - 4
-                        endPoint = Rotate(rotatedPoint, -angle);
-                        endPoint.Angle = startPoint.Angle;
-                        break;
-                    case 'T':
-                        var alpha = Constants.T_ANGLES[t2];
-                        rotatedPoint.X += direction * Constants.RADIUS * (1 - Math.Cos(alpha));
-                        rotatedPoint.Y += Constants.RADIUS * Math.Sin(alpha);
-                        endPoint = Rotate(rotatedPoint, -angle);
-                        endPoint.Angle = startPoint.Angle - direction * alpha;
-                        break;
-                    case 'Y':
-                        // forks[current] = MakeFork(startPoint, angle, direction);
-                        // endPoint = forks[current].Base;
-                        break;
-                }
-
-                if (endPoint.Angle < 0)
-                {
-                    endPoint.Angle += 2 * Math.PI;
-                }
-                else if (endPoint.Angle >= 2 * Math.PI)
-                {
-                    endPoint.Angle -= 2 * Math.PI;
-                }
+                
+                var endPoint = MakeStep(startPoint, t2, direction);
 
                 if (points[current] != null && !((Point)points[current]).Equals(endPoint))
                 {
@@ -106,7 +120,7 @@ namespace LilaApp.Algorithm
                 price += model.Blocks.FirstOrDefault(_ => _.Name == detail)?.Price ?? 0;
             }
 
-            var nonNullablePoints = points.Select(point => (Point)point).ToArray();
+            var nonNullablePoints = points.Select(point => point ?? new Point(0, 0, -99)).ToArray();
 
             return new Result
             {

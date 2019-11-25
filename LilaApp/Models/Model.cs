@@ -7,22 +7,27 @@ namespace LilaApp.Models
         /// <summary>
         /// Список доступных блоков
         /// </summary>
-        public List<Block> Blocks;
+        public List<Block> Blocks { get; }
 
         /// <summary>
         /// Точки маршрута
         /// </summary>
-        public List<Point> Points;
+        public List<Point> Points { get; }
 
         /// <summary>
         /// Порядок элементов
         /// </summary>
-        public List<string> Order;
+        public List<string> Order { get; set; }
 
         /// <summary>
         /// Топология соединения блоков
         /// </summary>
-        public List<TopologyItem> Topology;
+        public List<TopologyItem> Topology { get; set; }
+
+        /// <summary>
+        /// Матрица расстояний между точками маршрута
+        /// </summary>
+        public double[][] Distances { get; set; }
 
         public Model()
         {
@@ -30,6 +35,21 @@ namespace LilaApp.Models
             Points = new List<Point>();
             Order = new List<string>();
             Topology = new List<TopologyItem>();
+        }
+
+        /// <summary>
+        /// Конструктор копирования
+        /// </summary>
+        /// <param name="other"></param>
+        public Model(Model other)
+        {
+            Blocks = new List<Block>(other?.Blocks);
+            Points = new List<Point>(other?.Points);
+            Order = new List<string>(other?.Order);
+            Topology = new List<TopologyItem>(other?.Topology);
+            Distances = new double[other.Distances.Length][];
+            for(int i = 0; i < other.Distances.Length; i++)
+                Distances[i] = new List<double>(other.Distances[i]).ToArray();
         }
 
         /// <summary>

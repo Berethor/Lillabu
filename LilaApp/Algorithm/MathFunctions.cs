@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Collections.Generic;
 using LilaApp.Models;
 
 namespace LilaApp.Algorithm
@@ -81,6 +81,38 @@ namespace LilaApp.Algorithm
             return Math.Sqrt(
                 Math.Pow(waypoint.X - detailPoint.X, 2) +
                 Math.Pow(waypoint.Y - detailPoint.Y, 2));
+        }
+
+        /// <summary>
+        /// Рассчитать расстояние между всеми точками
+        /// </summary>
+        /// <param name="routes">Список точек</param>
+        /// <returns>Матрица N*N расстояний между i и j точкой</returns>
+        public static double[][] GetDistanсeBetweenAllPoints(List<Point> routes)
+        {
+            var points = routes?.ToArray();
+            var n = points.Length;
+            var distance = new double[n][];
+            for (var i = 0; i < n; i++)
+            {
+                distance[i] = new double[n];
+            }
+
+            for (var i = 0; i < n; i++)
+            {
+                for (var j = 0; j < n; j++)
+                {
+                    if (i == j)
+                    {
+                        distance[i][j] = 0;
+                        continue;
+                    }
+
+                    distance[i][j] = distance[j][i] = MathFunctions.GetDistanceToPoint(points[i], points[j]);
+                }
+            }
+
+            return distance;
         }
     }
 }

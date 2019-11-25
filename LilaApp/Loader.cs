@@ -134,6 +134,7 @@ namespace LilaApp
                     if (line.Equals(END_BLOCK_SIGN))
                     {
                         // Добавляем координату 0-0, если она не является последней координатой
+                        /*
                         if (model.Points.Count != 0)
                         {
                             var point = new Point(0, 0);
@@ -142,7 +143,7 @@ namespace LilaApp
                                 model.Points.Add(point);
                             }
                         }
-
+                        */
                         isEndBlockReached = true;
                         continue;
                     }

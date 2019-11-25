@@ -5,13 +5,13 @@ namespace LilaApp.Algorithm
 {
     using Models;
 
-    public static class DirectTaskSolver
+    public class DirectTaskSolver : IDirectTaskSolver
     {
         public static double GetRoutePrice(Model taskModel, Point[] detailsPoints)
         {
             var routePrice = 0.0;
 
-            foreach (var waypoint in taskModel.Points)
+            foreach (var waypoint in taskModel?.Points)
             {
                 var length = detailsPoints.Min(detailPoint => MathFunctions.GetDistanceToPoint(detailPoint, waypoint));
 
@@ -22,5 +22,19 @@ namespace LilaApp.Algorithm
 
             return Math.Round(routePrice, 10);
         }
+
+        #region Implementation of IDirectTaskSolver
+
+        /// <inheritdoc />
+        public double Solve(Model model)
+        {
+            var trace = TraceBuilder.CalculateTrace(model);
+
+            var prcie = GetRoutePrice(model, trace.Points);
+
+            return prcie;
+        }
+
+        #endregion
     }
 }
