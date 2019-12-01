@@ -90,7 +90,7 @@ namespace Lilabu.ViewModels
             RunCommand = new BaseCommand(() =>
             {
                 var checker = new DirectTaskSolver();
-                var solver = new FirstFinalSolver();
+                var solver = new SecondFinalSolver();
 
                 solver.OnStepEvent += (_, m) =>
                 {
