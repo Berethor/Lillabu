@@ -43,12 +43,22 @@ namespace LilaApp.Models
         /// <param name="other"></param>
         public Model(Model other)
         {
+            if (other == null)
+            {
+                Blocks = new List<Block>();
+                Points = new List<Point>();
+                Order = new List<string>();
+                Topology = new List<TopologyItem>();
+
+                return;
+            }
+
             Blocks = new List<Block>(other?.Blocks);
             Points = new List<Point>(other?.Points);
             Order = new List<string>(other?.Order);
             Topology = new List<TopologyItem>(other?.Topology);
-            Distances = new double[other.Distances.Length][];
-            for(int i = 0; i < other.Distances.Length; i++)
+            Distances = new double[other.Distances?.Length ?? 0][];
+            for(int i = 0; i < other.Distances?.Length; i++)
                 Distances[i] = new List<double>(other.Distances[i]).ToArray();
         }
 

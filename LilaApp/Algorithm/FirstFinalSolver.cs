@@ -1,7 +1,7 @@
-﻿using LilaApp.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LilaApp.Models;
 
 namespace LilaApp.Algorithm
 {
@@ -24,7 +24,7 @@ namespace LilaApp.Algorithm
             _checker = checker;
 
             _answer = new Model(model);
-            
+
             Run();
 
             return new FinalAnswer()
@@ -34,9 +34,10 @@ namespace LilaApp.Algorithm
             };
         }
 
-        #endregion
-
+        /// <inheritdoc />
         public event EventHandler<Model> OnStepEvent;
+
+        #endregion
 
         private Model _model;
         private Model _answer;

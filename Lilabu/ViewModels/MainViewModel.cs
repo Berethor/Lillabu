@@ -90,7 +90,7 @@ namespace Lilabu.ViewModels
             RunCommand = new BaseCommand(() =>
             {
                 var checker = new DirectTaskSolver();
-                var solver = new FirstFinalSolver();
+                var solver = new ThirdFinalSolver();
 
                 solver.OnStepEvent += (_, m) =>
                 {
@@ -109,7 +109,8 @@ namespace Lilabu.ViewModels
 
                     Application.Current.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                       DisplayModel(answer.Model);
+                        Output = string.Empty;
+                        DisplayModel(answer.Model);
                     }));
                 });
             });
