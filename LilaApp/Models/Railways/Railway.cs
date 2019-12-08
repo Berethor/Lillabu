@@ -15,7 +15,7 @@ namespace LilaApp.Models.Railways
     {
         #region Fields
 
-        private Point? _start;
+        private Point _start;
 
         #endregion
 
@@ -34,7 +34,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка начала блока рельсов
         /// </summary>
-        public Point? Start {
+        public Point Start {
             get => _start;
             set {
                 _start = value;
@@ -45,7 +45,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка окончания блока рельсов
         /// </summary>
-        public Point? End { get; private set; }
+        public Point End { get; private set; }
 
         /// <summary>
         /// Шаблон железной дороги, симметричный текущему.
@@ -74,6 +74,11 @@ namespace LilaApp.Models.Railways
             return new List<Railway>(1) { this };
         }
 
+        /// <summary>
+        /// Размеры шаблона
+        /// </summary>
+        public TemplateDimensions Dimensions { get; }
+
         #endregion
 
         #region Properties
@@ -82,7 +87,7 @@ namespace LilaApp.Models.Railways
         /// Тип блока рельсов
         /// </summary>
         public RailwayType Type { get; }
-        
+
         /// <summary>
         /// Название блока, например "L1"
         /// </summary>
@@ -130,6 +135,8 @@ namespace LilaApp.Models.Railways
         public Railway(RailwayType type)
         {
             Type = type;
+
+            Dimensions = new TemplateDimensions(this, false);
         }
 
         #endregion
@@ -140,15 +147,10 @@ namespace LilaApp.Models.Railways
         /// Вычисление точки окончания блока рельсов
         /// </summary>
         /// <returns>Точка окончания бока рельсов</returns>
-        private Point? CalculateEndPoint()
+        private Point CalculateEndPoint()
         {
-            if (_start == null)
-            {
-                return null;
-            }
-
             var (name, direction) = MapTypeToName(Type);
-            var endPoint = TraceBuilder.MakeStep((Point)_start, name, direction);
+            var endPoint = TraceBuilder.MakeStep(_start, name, direction);
             return endPoint;
         }
 

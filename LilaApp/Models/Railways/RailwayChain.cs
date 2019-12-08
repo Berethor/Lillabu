@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace LilaApp.Models.Railways
@@ -15,7 +14,7 @@ namespace LilaApp.Models.Railways
 
         private readonly Railway[] _railways;
 
-        private Point? _start = new Point();
+        private Point _start;
 
         #endregion
 
@@ -28,6 +27,8 @@ namespace LilaApp.Models.Railways
         public RailwayChain(params Railway[] railways)
         {
             _railways = railways;
+
+            Dimensions = new TemplateDimensions(this, false);
         }
 
         #endregion
@@ -47,11 +48,9 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка начала текущего шаблона железной дороги
         /// </summary>
-        public Point? Start
-        {
+        public Point Start {
             get => _start;
-            set
-            {
+            set {
                 _start = value;
 
                 for (var i = 0; i < _railways.Length; i++)
@@ -73,7 +72,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка окончания текущего шаблона железной дороги
         /// </summary>
-        public Point? End => _railways.LastOrDefault()?.End;
+        public Point End => _railways.LastOrDefault()?.End ?? Point.Zero;
 
         /// <summary>
         /// Шаблон железной дороги, симметричный текущему.
@@ -103,6 +102,11 @@ namespace LilaApp.Models.Railways
         {
             return _railways.ToList();
         }
+
+        /// <summary>
+        /// Размеры шаблона
+        /// </summary>
+        public TemplateDimensions Dimensions { get; }
 
         #endregion
     }

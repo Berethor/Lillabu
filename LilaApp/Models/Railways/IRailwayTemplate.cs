@@ -23,12 +23,12 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка начала текущего шаблона железной дороги
         /// </summary>
-        Point? Start { get; set; }
+        Point Start { get; set; }
 
         /// <summary>
         /// Точка окончания текущего шаблона железной дороги
         /// </summary>
-        Point? End { get; }
+        Point End { get; }
 
         /// <summary>
         /// Шаблон железной дороги, симметричный текущему.
@@ -50,5 +50,10 @@ namespace LilaApp.Models.Railways
         /// </summary>
         /// <returns></returns>
         List<Railway> GetRailways();
+
+        /// <summary>
+        /// Размеры шаблона
+        /// </summary>
+        TemplateDimensions Dimensions { get; }
     }
 }
