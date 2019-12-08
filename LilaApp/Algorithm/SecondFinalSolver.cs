@@ -121,7 +121,7 @@ namespace LilaApp.Algorithm
             sides[4].details.Add(trace.Points[0]);
 
             int index = 0;
-            if (blocks.Find(a => a.Name.StartsWith("B")).Count > 0)
+            if (blocks.Count(_ => _.Name.StartsWith("B")) > 0)
             {
                 var angle = trace.Points[index].Angle;
 
