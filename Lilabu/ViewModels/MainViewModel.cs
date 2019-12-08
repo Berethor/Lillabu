@@ -146,6 +146,7 @@ namespace Lilabu.ViewModels
                 }
             };
 
+            FileLoaderVm.OpenLastFile();
         }
 
     }
