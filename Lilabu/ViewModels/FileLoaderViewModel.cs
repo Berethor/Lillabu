@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using LilaApp;
+using LilaApp.Generator;
 using Microsoft.Win32;
 
 namespace Lilabu.ViewModels
@@ -27,24 +29,31 @@ namespace Lilabu.ViewModels
         public BaseCommand SaveCommand { get; }
 
         /// <summary>
+        /// Параметры генератора
+        /// </summary>
+        public GeneratorViewModel GeneratorVM { get; }
+
+        /// <summary>
         /// Событие изменения входных данных
         /// </summary>
         public event EventHandler<string> InputChanged;
 
         /// <summary>
-        /// Путь к файлу для сохранения последнего файла
+        /// Конфигурация
         /// </summary>
-        private const string LastFileName = "last_file.txt";
+        private FileLoaderConfiguration Configuration { get; }
 
         /// <summary>
         /// Открыть последний файл
         /// </summary>
         public void OpenLastFile()
         {
+            var lastFileName = Configuration?.LastFile;
+
             // Открываем последний файл
-            if (File.Exists(LastFileName))
+            if (!string.IsNullOrEmpty(lastFileName))
             {
-                FilePath = File.ReadAllText(LastFileName);
+                FilePath = lastFileName;
                 InputText = File.ReadAllText(FilePath);
 
                 InputChanged?.Invoke(this, InputText);
@@ -56,6 +65,20 @@ namespace Lilabu.ViewModels
         /// </summary>
         public FileLoaderViewModel()
         {
+            Configuration = new FileLoaderConfiguration().Load();
+
+            var generatorConfiguration = GeneratorConfiguration.Default.Load();
+            GeneratorVM = GeneratorViewModel.FromConfiguration(generatorConfiguration);
+
+            GeneratorVM.OnGeneration += (_, configuration) =>
+            {
+                var model = new Generator(configuration).CreateInputData();
+                
+                InputText = model.Serialize();
+
+                InputChanged?.Invoke(this, InputText);
+            };
+
             BrowseCommand = new BaseCommand(() =>
             {
                 var openFileDialog = new OpenFileDialog();
@@ -65,12 +88,13 @@ namespace Lilabu.ViewModels
                     InputText = File.ReadAllText(FilePath);
 
                     // Запоминаем последний открытый файл
-                    File.WriteAllText(LastFileName, FilePath);
+                    Configuration.LastFile = FilePath;
+                    Configuration.Save();
 
                     InputChanged?.Invoke(this, InputText);
                 }
             });
-
+            
             SaveCommand = new BaseCommand(() =>
             {
                 if (!string.IsNullOrEmpty(FilePath))
@@ -81,5 +105,27 @@ namespace Lilabu.ViewModels
                 InputChanged?.Invoke(this, InputText);
             });
         }
+    }
+
+    [Serializable]
+    public class FileLoaderConfiguration : IConfiguration
+    {
+        #region Properties
+
+        /// <summary>
+        /// Путь к файлу для сохранения последнего файла
+        /// </summary>
+        public string LastFile { get; set; }
+
+        #endregion
+
+        #region Implementation of IConfiguration
+
+        /// <summary>
+        /// Название файла конфигурации
+        /// </summary>
+        public string FileName => "last_file.xml";
+
+        #endregion
     }
 }

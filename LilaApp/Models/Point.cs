@@ -4,6 +4,7 @@ using System.Diagnostics;
 namespace LilaApp.Models
 {
     [DebuggerDisplay("{StringValue}")]
+    [Serializable]
     public struct Point : ICloneable
     {
         #region Fields

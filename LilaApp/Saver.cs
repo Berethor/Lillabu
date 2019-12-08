@@ -13,7 +13,7 @@ namespace LilaApp
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static string Save(this Model model)
+        public static string Serialize(this Model model)
         {
             var text = new StringBuilder();
 

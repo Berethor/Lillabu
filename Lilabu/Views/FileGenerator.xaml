@@ -1,0 +1,77 @@
+﻿<UserControl x:Class="Lilabu.Views.FileGenerator"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewModels="clr-namespace:Lilabu.ViewModels"
+             xmlns:views="clr-namespace:Lilabu.Views"
+             d:DataContext="{d:DesignInstance Type=viewModels:GeneratorViewModel}"
+             d:DesignWidth="300" mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="5 2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0 5"/>
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Количество блоков"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Path=MinBlockCount}"/>
+        <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Path=MaxBlockCount}"/>
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Цена одного блока"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Path=MinBlockPrice}"/>
+        <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding Path=MaxBlockPrice}"/>
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Количество точек маршрута"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Path=MinRoutesCount}"/>
+        <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding Path=MaxRoutesCount}"/>
+
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Прибыль с точки маршрута"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Path=MinRoutePrice}"/>
+        <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding Path=MaxRoutePrice}"/>
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" Text="Границы генерации точек маршрута (min, max)"/>
+        <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="X"/>
+            <TextBox   Grid.Column="1" Text="{Binding Path=MinRouteX}"/>
+            <TextBlock Grid.Column="2" Text="Y"/>
+            <TextBox   Grid.Column="3" Text="{Binding Path=MinRouteY}"/>
+            <TextBlock Grid.Column="4" Text="X"/>
+            <TextBox   Grid.Column="5" Text="{Binding Path=MaxRouteX}"/>
+            <TextBlock Grid.Column="6" Text="Y"/>
+            <TextBox   Grid.Column="7" Text="{Binding Path=MaxRouteY}"/>
+        </Grid>
+    </Grid>
+</UserControl>

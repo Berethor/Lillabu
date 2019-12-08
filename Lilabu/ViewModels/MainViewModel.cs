@@ -106,7 +106,7 @@ namespace Lilabu.ViewModels
                 Output = string.Empty;
                 DisplayModel(model);
 
-                FileLoaderVm.InputText = model.Save();
+                FileLoaderVm.InputText = model.Serialize();
             }));
 
             if (sender != null)
@@ -172,6 +172,5 @@ namespace Lilabu.ViewModels
 
             FileLoaderVm.OpenLastFile();
         }
-
     }
 }

@@ -61,8 +61,12 @@
     <Compile Include="ViewModels\ABaseViewModel.cs" />
     <Compile Include="ViewModels\BaseCommand.cs" />
     <Compile Include="ViewModels\FileLoaderViewModel.cs" />
+    <Compile Include="ViewModels\GeneratorViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\TraceMapViewModel.cs" />
+    <Compile Include="Views\FileGenerator.xaml.cs">
+      <DependentUpon>FileGenerator.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\FileLoader.xaml.cs">
       <DependentUpon>FileLoader.xaml</DependentUpon>
     </Compile>
@@ -81,6 +85,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\FileGenerator.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\FileLoader.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
