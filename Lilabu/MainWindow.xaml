@@ -30,7 +30,14 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <views:FileLoader DataContext="{Binding Path=FileLoaderVm}" />
-                <Button Grid.Row="1" Content="Запустить" Command="{Binding Path=RunCommand}" Margin="5" Padding="0 2"/>
+                <Grid Grid.Row="1" Margin="5 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Margin="0 0 2.5 0" ItemsSource="{Binding Path=Solvers}" SelectedItem="{Binding Path=SelectedSolver}"/>
+                    <Button Grid.Column="1" Content="Запустить" Command="{Binding Path=RunCommand}" Margin="2.5 0 0 0" Padding="0 2"/>
+                </Grid>
             </Grid>
         </GroupBox>
         <GridSplitter Grid.Column="0" Width="10" Background="White" Margin="0 0 -5 0"/>

@@ -38,6 +38,20 @@ namespace Lilabu.ViewModels
         /// </summary>
         public Model Model { get; private set; }
 
+        /// <summary>
+        /// Алгоритмы решения задачи
+        /// </summary>
+        private readonly IFinalTaskSolver[] _solvers;
+
+        /// <summary>
+        /// Названия алгоритмов решения задачи
+        /// </summary>
+        public string[] Solvers => _solvers.Select(solver => solver.GetType().Name).ToArray();
+
+        /// <summary>
+        /// Выбранный алгоритм решения задачи
+        /// </summary>
+        public string SelectedSolver { get; set; }
 
         /// <summary>
         /// Команда запуска решения обратной задачи
@@ -109,10 +123,18 @@ namespace Lilabu.ViewModels
         {
             Title = "Lilabu Application";
 
+            _solvers = new IFinalTaskSolver[]
+            {
+                new FirstFinalSolver(),
+                new ThirdFinalSolver(),
+            };
+
+            SelectedSolver = _solvers[1].GetType().Name;
+
             RunCommand = new BaseCommand(() =>
             {
                 var checker = new DirectTaskSolver();
-                var solver = new ThirdFinalSolver();
+                var solver = _solvers.First(_ => _.GetType().Name == SelectedSolver);
 
                 solver.OnStepEvent += DisplayModelStep;
 
