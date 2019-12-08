@@ -11,14 +11,14 @@ namespace LilaApp.Algorithm.SecondSolverHelper
         public Point EndPoint;
         public int StartIndex { get; set; }
         public int EndIndex { get; set; }
-
+        public int SideEndIndex { get; set; }
         public List<Point> details;
         /// <summary>
         /// Список доступных расширений и их связи для куска маршрута
         /// </summary>
         public List<(string command, RouteSide, bool action)> actions;
 
-        public RouteSide(Point routeStartPoint, int index)
+        public RouteSide(Point routeStartPoint, int index, int sideEndIndex)
         {
             StartPoint = routeStartPoint;
             StartIndex = index;
@@ -26,8 +26,13 @@ namespace LilaApp.Algorithm.SecondSolverHelper
             EndIndex = index;
             actions = new List<(string command, RouteSide, bool action)>();
             details = new List<Point>();
+            SideEndIndex = sideEndIndex;
         }
-        public RouteSide(Point routeStartPoint, Point routeEndPoint,int startI, int endI)
+        public RouteSide(
+            Point routeStartPoint,
+            Point routeEndPoint,
+            int startI, int endI,
+            int sideEndIndex)
         {
             StartPoint = routeStartPoint;
             StartIndex = startI;
@@ -35,6 +40,7 @@ namespace LilaApp.Algorithm.SecondSolverHelper
             EndIndex = endI;
             actions = new List<(string command, RouteSide, bool action)> ();
             details = new List<Point>();
+            SideEndIndex = sideEndIndex;
         }
         public void AddShiftToDetails(Point shift, int startIndex)
         {
