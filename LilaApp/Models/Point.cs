@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace LilaApp.Models
 {
     [DebuggerDisplay("{StringValue}")]
-    public struct Point
+    public struct Point : ICloneable
     {
         #region Fields
 
@@ -98,6 +98,13 @@ namespace LilaApp.Models
         public override string ToString()
         {
             return $"{StringValue}";
+        }
+
+        /// <summary>Creates a new object that is a copy of the current instance.</summary>
+        /// <returns>A new object that is a copy of this instance.</returns>
+        public object Clone()
+        {
+            return this.MemberwiseClone();
         }
 
         public override int GetHashCode()

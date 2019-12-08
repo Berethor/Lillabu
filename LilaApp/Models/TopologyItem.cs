@@ -1,9 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace LilaApp.Models
 {
     [DebuggerDisplay("{FirstBlock} {SecondBlock} {Direction}")]
-    public class TopologyItem
+    public class TopologyItem : ICloneable
     {
         public int FirstBlock { get; set; }
 
@@ -25,9 +26,19 @@ namespace LilaApp.Models
             SecondBlock = item.SecondBlock;
             Direction = item.Direction;
         }
+
         public override string ToString()
         {
             return $"{FirstBlock} {SecondBlock} {Direction}";
         }
+
+        #region Implementation of ICloneable
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        #endregion
     }
 }

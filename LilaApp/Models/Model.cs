@@ -1,18 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LilaApp.Models
 {
-    public class Model
+    public class Model : ICloneable
     {
         /// <summary>
         /// Список доступных блоков
         /// </summary>
-        public List<Block> Blocks { get; }
+        public List<Block> Blocks { get; private set; }
 
         /// <summary>
         /// Точки маршрута
         /// </summary>
-        public List<Point> Points { get; }
+        public List<Point> Points { get; private set; }
 
         /// <summary>
         /// Порядок элементов
@@ -41,25 +43,11 @@ namespace LilaApp.Models
         /// Конструктор копирования
         /// </summary>
         /// <param name="other"></param>
-        public Model(Model other)
+        public static Model Copy(Model other)
         {
-            if (other == null)
-            {
-                Blocks = new List<Block>();
-                Points = new List<Point>();
-                Order = new List<string>();
-                Topology = new List<TopologyItem>();
+            var cloned = other?.Clone() as Model;
 
-                return;
-            }
-
-            Blocks = new List<Block>(other?.Blocks);
-            Points = new List<Point>(other?.Points);
-            Order = new List<string>(other?.Order);
-            Topology = new List<TopologyItem>(other?.Topology);
-            Distances = new double[other.Distances?.Length ?? 0][];
-            for(int i = 0; i < other.Distances?.Length; i++)
-                Distances[i] = new List<double>(other.Distances[i]).ToArray();
+            return cloned ?? new Model();
         }
 
         /// <summary>
@@ -75,5 +63,22 @@ namespace LilaApp.Models
             Order = new List<string>(elementRestriction);
             Topology = new List<TopologyItem>(elementRestriction);
         }
+
+        #region Implementation of ICloneable
+
+        public object Clone()
+        {
+            var model = new Model
+            {
+                Blocks = Blocks.Clone(),
+                Points = Points.Clone(),
+                Order = Order.Clone(),
+                Topology = Topology.Clone(),
+            };
+
+            return model;
+        }
+
+        #endregion
     }
 }

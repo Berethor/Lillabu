@@ -23,7 +23,7 @@ namespace LilaApp.Algorithm
             _model = model;
             _checker = checker;
 
-            _answer = new Model(model);
+            _answer = Model.Copy(_model);
 
             Run();
 

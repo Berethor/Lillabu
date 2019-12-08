@@ -1,9 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace LilaApp.Models
 {
     [DebuggerDisplay("{Name} {Count} {Price}")]
-    public class Block
+    public class Block : ICloneable
     {
         /// <summary>
         /// Название блока
@@ -28,5 +29,14 @@ namespace LilaApp.Models
             Count = count;
             Price = price;
         }
+
+        #region Implementation of ICloneable
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        #endregion
     }
 }

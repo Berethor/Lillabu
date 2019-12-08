@@ -75,7 +75,7 @@ namespace LilaApp.Models.Railways
         public static Model ConvertToModel(this Railway head, Model initial = null)
         {
             // Копируем исходные данные
-            var model = new Model(initial);
+            var model = Model.Copy(initial);
             model.Topology.Clear();
             model.Order.Clear();
 

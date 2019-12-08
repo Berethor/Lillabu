@@ -23,7 +23,8 @@ namespace LilaApp.Algorithm
             _model = model;
             _checker = checker;
 
-            _answer = new Model(model);
+            _answer = Model.Copy(_model);
+
             Run();
 
             return new FinalAnswer()
@@ -49,8 +50,8 @@ namespace LilaApp.Algorithm
 
         private void Run()
         {
-            var blocks = _model.Blocks;
-            var points = _model.Points;
+            var blocks = _answer.Blocks;
+            var points = _answer.Points;
             double traceIncome;
             Point pointShift;
 
@@ -236,6 +237,7 @@ namespace LilaApp.Algorithm
 
             }
 
+            _answer = Model.Copy(_model);
             _answer.Order = _newOrder;
             _answer.Topology = _newTopology;
 
