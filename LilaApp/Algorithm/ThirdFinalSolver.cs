@@ -29,7 +29,7 @@ namespace LilaApp.Algorithm
             var compass = Compass(head);
 
             // Первый этап - расширяем кольцо вверх, вниз и в сторону
-            for (int i = 0; i < 40; i++)
+            for (var i = 0; i < 40; i++)
             {
                 // Блок, к которому добавляем L1
                 var dest = compass.W;
@@ -46,11 +46,7 @@ namespace LilaApp.Algorithm
                 //else if (i % 4 == 2) dest = compass.N;
                 //else if (i % 4 == 3) dest = compass.NE;
 
-                var forward = dest.Append(new Railway(RailwayType.Line));
-                var backward = dest.Symmetric.Append(new Railway(RailwayType.Line));
-                // Связываем добавленные блоки связью симметрии
-                forward.Symmetric = backward;
-                backward.Symmetric = forward;
+                dest.AppendSymmetric(new Railway(RailwayType.Line));
 
                 _answer = ConvertToModel(head);
                 OnStepEvent?.Invoke(this, _answer);
@@ -85,7 +81,7 @@ namespace LilaApp.Algorithm
             // Добавляем блок L0
             var head = new Railway(RailwayType.Line, length: 0) { Start = new Point(0, 0), };
 
-            var last = head;
+            IRailwayTemplate last = head;
             // Добавляем 8 блоков T4
             for (var i = 0; i < 8; i++)
             {
@@ -119,9 +115,9 @@ namespace LilaApp.Algorithm
             Compass(Railway head)
         {
             return (
-                head[1], head[2], head[3],
-                head[0], /*    */ head[4],
-                head[7], head[6], head[5]);
+                head[1] as Railway, head[2] as Railway, head[3] as Railway,
+                head[0] as Railway, /*               */ head[4] as Railway,
+                head[7] as Railway, head[6] as Railway, head[5] as Railway);
         }
 
         /// <summary>
@@ -134,21 +130,29 @@ namespace LilaApp.Algorithm
             // Копируем исходные данные
             var model = new Model(_model);
 
-            var i = 1;
-            var item = head.Next;
+            var k = 1;
+            var template = head.Next;
             do
             {
-                var source = i - 1;
-                var destination = item.Next.IsHead() ? 0 : i;
+                // Разбиваем шаблон железной дороги на отдельные блоки
+                var railways = template.GetRailways();
+                for (var i = 0; i < railways.Count; i++)
+                {
+                    var railway = railways[i];
 
-                model.Order.Add(item.Name);
-                var topology = new TopologyItem(source, destination, item.Direction);
-                model.Topology.Add(topology);
+                    var source = k + i - 1;
+                    var destination = railway.Next.IsHead() ? 0 : k + i;
 
-                item = item.Next;
-                i++;
+                    // Добавляем каждый блок в модель
+                    model.Order.Add(railway.Name);
+                    var topology = new TopologyItem(source, destination, railway.Direction);
+                    model.Topology.Add(topology);
+                }
+
+                template = template.Next;
+                k+= railways.Count;
             }
-            while (!item.IsHead());
+            while (!template.IsHead());
 
             return model;
         }

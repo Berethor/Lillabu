@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace LilaApp.Models.Railways
@@ -6,16 +7,72 @@ namespace LilaApp.Models.Railways
     using Algorithm;
 
     /// <summary>
-    /// Блок рельсов.
-    /// Является двусвязным списком - содержит ссылку на предыдущий и следующий элемент
+    /// Блок рельсов. Атомарная единица железной дороги.
+    /// Блок рельсов реализует интерфейс шаблона железной дороги
     /// </summary>
     [DebuggerDisplay("{Name} [{Start} → {End}]")]
-    public class Railway
+    public class Railway : IRailwayTemplate
     {
         #region Fields
 
         private Point? _start;
-        private Point? _end;
+
+        #endregion
+
+        #region Implementation of IRailwayTemplate
+
+        /// <summary>
+        /// Следующий шаблон железной дороги
+        /// </summary>
+        public IRailwayTemplate Next { get; set; }
+
+        /// <summary>
+        /// Предыдущий шаблон железной дороги
+        /// </summary>
+        public IRailwayTemplate Prev { get; set; }
+
+        /// <summary>
+        /// Точка начала блока рельсов
+        /// </summary>
+        public Point? Start {
+            get => _start;
+            set {
+                _start = value;
+                End = CalculateEndPoint();
+            }
+        }
+
+        /// <summary>
+        /// Точка окончания блока рельсов
+        /// </summary>
+        public Point? End { get; private set; }
+
+        /// <summary>
+        /// Шаблон железной дороги, симметричный текущему.
+        /// Если добавить после текущего шаблона блок L1,
+        /// то для того, чтобы путь остался замкнутым,
+        /// надо добавить после симметричного ещё один блок L1.
+        /// (при этом направления блоков L1 должны быть противоположными)
+        /// </summary>
+        public IRailwayTemplate Symmetric { get; set; }
+
+        /// <summary>
+        /// Создать копию шаблона, не привязанную к другим шаблонам
+        /// </summary>
+        /// <returns></returns>
+        public IRailwayTemplate Clone()
+        {
+            return new Railway(Type, Length);
+        }
+
+        /// <summary>
+        /// Преобразование шаблона железной дороги к списку отдельных блоков рельсов
+        /// </summary>
+        /// <returns></returns>
+        public List<Railway> GetRailways()
+        {
+            return new List<Railway>(1) { this };
+        }
 
         #endregion
 
@@ -42,52 +99,17 @@ namespace LilaApp.Models.Railways
         public int Direction => Type == RailwayType.TurnLeft ? -1 : 1;
 
         /// <summary>
-        /// Точка начала блока рельсов
-        /// </summary>
-        public Point? Start {
-            get => _start;
-            set {
-                _start = value;
-                _end = CalculateEndPoint();
-            }
-        }
-
-        /// <summary>
-        /// Точка окончания блока рельсов
-        /// </summary>
-        public Point? End => _end;
-
-        /// <summary>
-        /// Следующий блок рельсов
-        /// </summary>
-        public Railway Next { get; set; }
-
-        /// <summary>
-        /// Предыдущий блок рельсов
-        /// </summary>
-        public Railway Prev { get; set; }
-
-        /// <summary>
-        /// Блок рельсов, симметричный текущему.
-        /// Если добавить после текущего блока блок L1,
-        /// то для того, чтобы путь остался замкнутым,
-        /// надо добавить после симметричного ещё один блок L1.
-        /// (при этом направления блоков L1 должны быть противоположными)
-        /// </summary>
-        public Railway Symmetric { get; set; }
-
-        /// <summary>
         /// Индексатор.
-        /// Возвращает i-ый следующий элемент, начиная от текущего блока.
+        /// Возвращает i-ый следующий шаблон железной дороги, начиная от текущего блока.
         /// Т.е. this[0] = this, this[1] = this.Next, this[2] = this.Next.Next и т.д.
         /// Допустимы и отрицательные значения: this[-1] = this.Prev и т.д.
         /// </summary>
-        /// <param name="index">Индекс следующего элемента, начиная отсчёт от текущего блока</param>
+        /// <param name="index">Индекс следующего шаблона железной дороги, начиная отсчёт от текущего блока</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
         /// <returns></returns>
-        public Railway this[int index] {
+        public IRailwayTemplate this[int index] {
             get {
-                var item = this;
+                IRailwayTemplate item = this;
 
                 for (var i = 0; i < Math.Abs(index); i++)
                 {
