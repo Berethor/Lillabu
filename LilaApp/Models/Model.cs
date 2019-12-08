@@ -75,6 +75,5 @@ namespace LilaApp.Models
             Order = new List<string>(elementRestriction);
             Topology = new List<TopologyItem>(elementRestriction);
         }
-
     }
 }

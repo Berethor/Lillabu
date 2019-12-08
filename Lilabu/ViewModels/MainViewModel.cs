@@ -81,6 +81,28 @@ namespace Lilabu.ViewModels
         }
 
         /// <summary>
+        /// Отрисовать модели в UI-потоке
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="model"></param>
+        public void DisplayModelStep(object sender, Model model)
+        {
+            Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
+            {
+                Output = string.Empty;
+                DisplayModel(model);
+
+                FileLoaderVm.InputText = model.Save();
+            }));
+
+            if (sender != null)
+            {
+                // Задержка отрисовки для анимации
+                Thread.Sleep(100);
+            }
+        }
+
+        /// <summary>
         ///  Конструктор по-умолчанию
         /// </summary>
         public MainViewModel()
@@ -92,26 +114,13 @@ namespace Lilabu.ViewModels
                 var checker = new DirectTaskSolver();
                 var solver = new ThirdFinalSolver();
 
-                solver.OnStepEvent += (_, m) =>
-                {
-                    Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
-                    {
-                        Output = string.Empty;
-                        DisplayModel(m);
-                    }));
-
-                    Thread.Sleep(100);
-                };
+                solver.OnStepEvent += DisplayModelStep;
 
                 Task.Factory.StartNew(() =>
                 {
                     var answer = solver.Solve(Model, checker);
-
-                    Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
-                    {
-                        Output = string.Empty;
-                        DisplayModel(answer.Model);
-                    }));
+                    
+                    DisplayModelStep(null, answer.Model);
                 });
             });
 

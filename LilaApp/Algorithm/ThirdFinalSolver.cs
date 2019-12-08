@@ -23,7 +23,7 @@ namespace LilaApp.Algorithm
             // Создать стартовую трассу - кольцо
             var head = CreateCircle(RailwayType.T4R);
 
-            _answer = ConvertToModel(head);
+            _answer = ConvertToModel(_model, head);
             OnStepEvent?.Invoke(this, _answer);
 
             var compass = Compass(head);
@@ -52,11 +52,11 @@ namespace LilaApp.Algorithm
                     new Railway(RailwayType.T8L),
                     new Railway(RailwayType.T8R),
                 });
-                dest.AppendSymmetric(chain);
+                //dest.AppendSymmetric(chain);
 
-                //dest.AppendSymmetric(new Railway(RailwayType.Line));
+                dest.AppendSymmetric(new Railway(RailwayType.L1));
 
-                _answer = ConvertToModel(head);
+                _answer = ConvertToModel(_model, head);
                 OnStepEvent?.Invoke(this, _answer);
             }
 
@@ -131,14 +131,18 @@ namespace LilaApp.Algorithm
         /// <summary>
         /// Преобразовать двусвязный список в модель
         /// </summary>
+        /// <param name="initial">Исходные данные</param>
         /// <param name="head">Указатель на начало списка</param>
         /// <returns></returns>
-        public Model ConvertToModel(Railway head)
+        public Model ConvertToModel(Model initial, Railway head)
         {
             // Копируем исходные данные
-            var model = new Model(_model);
+            var model = new Model(initial);
+            model.Topology.Clear();
+            model.Order.Clear();
 
             var k = 1;
+            model.Topology.Add(new TopologyItem(0, 1, 1));
             var template = head.Next;
             do
             {
@@ -148,8 +152,8 @@ namespace LilaApp.Algorithm
                 {
                     var railway = railways[i];
 
-                    var source = k + i - 1;
-                    var destination = railway.Next.IsHead() ? 0 : k + i;
+                    var source = k + i;
+                    var destination = railway.Next.IsHead() ? 0 : k + i + 1;
 
                     // Добавляем каждый блок в модель
                     model.Order.Add(railway.Name);
@@ -158,7 +162,7 @@ namespace LilaApp.Algorithm
                 }
 
                 template = template.Next;
-                k+= railways.Count;
+                k += railways.Count;
             }
             while (!template.IsHead());
 
