@@ -63,7 +63,7 @@ namespace LilaApp.Models.Railways
         /// <returns></returns>
         public static bool IsHead(this IRailwayTemplate item)
         {
-            return item is Railway railway && railway.Length == 0;
+            return item is Railway railway && railway.Type == RailwayType.L0;
         }
 
     }

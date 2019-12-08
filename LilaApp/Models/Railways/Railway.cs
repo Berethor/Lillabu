@@ -62,7 +62,7 @@ namespace LilaApp.Models.Railways
         /// <returns></returns>
         public IRailwayTemplate Clone()
         {
-            return new Railway(Type, Length);
+            return new Railway(Type);
         }
 
         /// <summary>
@@ -82,12 +82,7 @@ namespace LilaApp.Models.Railways
         /// Тип блока рельсов
         /// </summary>
         public RailwayType Type { get; }
-
-        /// <summary>
-        /// Длина блока рельс (только для прямых)
-        /// </summary>
-        public int Length { get; }
-
+        
         /// <summary>
         /// Название блока, например "L1"
         /// </summary>
@@ -96,7 +91,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Направление блока: -1 - налево, 1 - направо или прямо 
         /// </summary>
-        public int Direction => Type == RailwayType.TurnLeft ? -1 : 1;
+        public int Direction => Type == RailwayType.T4L || Type == RailwayType.T8L ? -1 : 1;
 
         /// <summary>
         /// Индексатор.
@@ -132,11 +127,9 @@ namespace LilaApp.Models.Railways
         /// Блок рельсов
         /// </summary>
         /// <param name="type">Тип блока</param>
-        /// <param name="length">Длина блока рельс (только для прямых)</param>
-        public Railway(RailwayType type, int length = 1)
+        public Railway(RailwayType type)
         {
             Type = type;
-            Length = length;
         }
 
         #endregion
@@ -168,10 +161,16 @@ namespace LilaApp.Models.Railways
         {
             switch (railType)
             {
-                case RailwayType.Line: return ($"L{Length}", 1);
-                case RailwayType.TurnLeft: return ("T4", -1);
-                case RailwayType.TurnRight: return ("T4", 1);
-                case RailwayType.Bridge: return ("B1", 1);
+                case RailwayType.L0: return ("L0", 1);
+                case RailwayType.L1: return ("L1", 1);
+                case RailwayType.L2: return ("L2", 1);
+                case RailwayType.L3: return ("L3", 1);
+                case RailwayType.L4: return ("L4", 1);
+                case RailwayType.T4L: return ("T4", -1);
+                case RailwayType.T4R: return ("T4", 1);
+                case RailwayType.T8R: return ("T8", 1);
+                case RailwayType.T8L: return ("T8", -1);
+                case RailwayType.B1: return ("B1", 1);
                 default: throw new ArgumentOutOfRangeException();
             }
         }

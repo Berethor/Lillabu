@@ -21,7 +21,7 @@ namespace LilaApp.Algorithm
             _model = model; // ?? throw new ArgumentNullException(nameof(model));
 
             // Создать стартовую трассу - кольцо
-            var head = CreateCircle(RailwayType.TurnRight);
+            var head = CreateCircle(RailwayType.T4R);
 
             _answer = ConvertToModel(head);
             OnStepEvent?.Invoke(this, _answer);
@@ -47,7 +47,11 @@ namespace LilaApp.Algorithm
                 //else if (i % 4 == 2) dest = compass.N;
                 //else if (i % 4 == 3) dest = compass.NE;
 
-                var chain = new RailwayChain(new Railway(RailwayType.TurnLeft), new Railway(RailwayType.TurnRight));
+                var chain = new RailwayChain(new[]
+                {
+                    new Railway(RailwayType.T8L),
+                    new Railway(RailwayType.T8R),
+                });
                 dest.AppendSymmetric(chain);
 
                 //dest.AppendSymmetric(new Railway(RailwayType.Line));
@@ -78,12 +82,12 @@ namespace LilaApp.Algorithm
         /// <summary>
         ///  Создать стартовую трассу - кольцо
         /// </summary>
-        /// <param name="turnDirection">Направление кольца (TurnRight или TurnLeft)</param>
+        /// <param name="turnDirection">Направление кольца (T4R или T4L)</param>
         /// <returns>Указатель на начало трассы - блок L0</returns>
-        public static Railway CreateCircle(RailwayType turnDirection = RailwayType.TurnRight)
+        public static Railway CreateCircle(RailwayType turnDirection)
         {
             // Добавляем блок L0
-            var head = new Railway(RailwayType.Line, length: 0) { Start = new Point(0, 0), };
+            var head = new Railway(RailwayType.L0) { Start = new Point(0, 0), };
 
             IRailwayTemplate last = head;
             // Добавляем 8 блоков T4
