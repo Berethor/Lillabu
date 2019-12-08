@@ -24,7 +24,14 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <GroupBox Header="Исходные данные:">
-            <views:FileLoader DataContext="{Binding Path=FileLoaderVm}" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <views:FileLoader DataContext="{Binding Path=FileLoaderVm}" />
+                <Button Grid.Row="1" Content="Запустить" Command="{Binding Path=RunCommand}" Margin="5" Padding="0 2"/>
+            </Grid>
         </GroupBox>
         <GridSplitter Grid.Column="0" Width="10" Background="White" Margin="0 0 -5 0"/>
         <GroupBox Header="Карта маршрута:" Grid.Column="1">

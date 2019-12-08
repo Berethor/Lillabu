@@ -1,6 +1,6 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.IO;
+using Microsoft.Win32;
 
 namespace Lilabu.ViewModels
 {
@@ -31,6 +31,25 @@ namespace Lilabu.ViewModels
         /// </summary>
         public event EventHandler<string> InputChanged;
 
+        /// <summary>
+        /// Путь к файлу для сохранения последнего файла
+        /// </summary>
+        private const string LastFileName = "last_file.txt";
+
+        /// <summary>
+        /// Открыть последний файл
+        /// </summary>
+        public void OpenLastFile()
+        {
+            // Открываем последний файл
+            if (File.Exists(LastFileName))
+            {
+                FilePath = File.ReadAllText(LastFileName);
+                InputText = File.ReadAllText(FilePath);
+
+                InputChanged?.Invoke(this, InputText);
+            }
+        }
 
         /// <summary>
         /// Конструктор по-умолчанию
@@ -44,6 +63,9 @@ namespace Lilabu.ViewModels
                 {
                     FilePath = openFileDialog.FileName;
                     InputText = File.ReadAllText(FilePath);
+
+                    // Запоминаем последний открытый файл
+                    File.WriteAllText(LastFileName, FilePath);
 
                     InputChanged?.Invoke(this, InputText);
                 }

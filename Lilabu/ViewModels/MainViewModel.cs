@@ -3,6 +3,8 @@ using LilaApp.Algorithm;
 using LilaApp.Models;
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Lilabu.ViewModels
@@ -36,6 +38,12 @@ namespace Lilabu.ViewModels
         /// </summary>
         public Model Model { get; private set; }
 
+
+        /// <summary>
+        /// Команда запуска решения обратной задачи
+        /// </summary>
+        public BaseCommand RunCommand { get; }
+
         #endregion
 
         /// <summary>
@@ -54,11 +62,67 @@ namespace Lilabu.ViewModels
         }
 
         /// <summary>
+        /// Отрисовать модель и вывести её стоимость
+        /// </summary>
+        /// <param name="model"></param>
+        private void DisplayModel(Model model)
+        {
+            Model = model;
+
+            var trace = TraceBuilder.CalculateTrace(model);
+            WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
+            TraceMapVm.Points = trace.Points;
+
+            var income = DirectTaskSolver.GetRoutePrice(model, trace.Points);
+
+            WriteLine($"Прибыль с точек маршрута: {income}");
+            WriteLine($"Стоимость блоков: {trace.Price}");
+            WriteLine($"Итого: {income - trace.Price}");
+        }
+
+        /// <summary>
+        /// Отрисовать модели в UI-потоке
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="model"></param>
+        public void DisplayModelStep(object sender, Model model)
+        {
+            Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
+            {
+                Output = string.Empty;
+                DisplayModel(model);
+
+                FileLoaderVm.InputText = model.Save();
+            }));
+
+            if (sender != null)
+            {
+                // Задержка отрисовки для анимации
+                Thread.Sleep(100);
+            }
+        }
+
+        /// <summary>
         ///  Конструктор по-умолчанию
         /// </summary>
         public MainViewModel()
         {
             Title = "Lilabu Application";
+
+            RunCommand = new BaseCommand(() =>
+            {
+                var checker = new DirectTaskSolver();
+                var solver = new ThirdFinalSolver();
+
+                solver.OnStepEvent += DisplayModelStep;
+
+                Task.Factory.StartNew(() =>
+                {
+                    var answer = solver.Solve(Model, checker);
+                    
+                    DisplayModelStep(null, answer.Model);
+                });
+            });
 
             FileLoaderVm.InputChanged += (sender, inputContent) =>
             {
@@ -71,15 +135,10 @@ namespace Lilabu.ViewModels
                     Model = model;
                     WriteLine(string.Join("\r\n", errors.Select(error => error.Message)));
 
-                    var trace = TraceBuilder.CalculateTrace(model);
-                    WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
-                    TraceMapVm.Points = trace.Points;
+                    model.Distances = MathFunctions.GetDistanсeBetweenAllPoints(model.Points);
 
-                    var income = DirectTaskSolver.GetRoutePrice(Model, trace.Points);
+                    DisplayModel(Model);
 
-                    WriteLine($"Прибыль с точек маршрута: {income}");
-                    WriteLine($"Стоимость блоков: {trace.Price}");
-                    WriteLine($"Итого: {income - trace.Price}");
                 }
                 catch (Exception exception)
                 {
@@ -87,6 +146,7 @@ namespace Lilabu.ViewModels
                 }
             };
 
+            FileLoaderVm.OpenLastFile();
         }
 
     }
