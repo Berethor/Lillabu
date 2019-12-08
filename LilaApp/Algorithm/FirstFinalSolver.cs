@@ -15,12 +15,7 @@ namespace LilaApp.Algorithm
         /// <inheritdoc />
         public FinalAnswer Solve(Model model, IDirectTaskSolver checker)
         {
-            if (model == null)
-            {
-                throw new ArgumentNullException(nameof(model));
-            }
-
-            _model = model;
+            _model = model ?? throw new ArgumentNullException(nameof(model));
             _checker = checker;
 
             _answer = Model.Copy(_model);
@@ -45,7 +40,7 @@ namespace LilaApp.Algorithm
 
         private void Run()
         {
-            var points = _model.Points;
+            var points = _answer.Points;
 
             const double epsilon = Constants.RADIUS * 2 / 3;
 
@@ -56,23 +51,23 @@ namespace LilaApp.Algorithm
             var visited = new Dictionary<int, Point>();
             visited[k] = point;
 
-            // Плаируемая трасса
+            // Планируемая трасса
             var trace = new List<(string name, Point point, int direction)>();
             trace.Add(("L0", new Point(0, 0, 0), 1));
 
-            int findNearest()
+            int FindNearest()
             {
                 var nearest = -1; // Индекс ближайшей соседней точки
-                for (var i = 0; i < _model.Distances[k].Length; i++)
+                for (var i = 0; i < _answer.Distances[k].Length; i++)
                 {
                     if (visited.ContainsKey(i) || point.Equals(points[i])) continue;
-                    if (nearest == -1 || _model.Distances[k][i] < _model.Distances[k][nearest]) nearest = i;
+                    if (nearest == -1 || _answer.Distances[k][i] < _answer.Distances[k][nearest]) nearest = i;
                 }
 
                 return nearest;
             }
 
-            var mi = findNearest();
+            var mi = FindNearest();
             var aim = points[mi];
 
             while (true)
@@ -101,7 +96,7 @@ namespace LilaApp.Algorithm
 
                 // Выбираем наилучший вариант
                 var best = variants[0];
-                for (int i = 1; i < variants.Count; i++)
+                for (var i = 1; i < variants.Count; i++)
                     if (variants[i].distance < best.distance && variants[i].distance < lastDistance)
                         best = variants[i];
 
@@ -110,15 +105,15 @@ namespace LilaApp.Algorithm
 
                 _answer.Order.Add(best.variant.name);
                 _answer.Topology.Add(new TopologyItem(trace.Count - 2, trace.Count - 1, best.variant.direction));
-                OnStepEvent.Invoke(this, _answer);
+                OnStepEvent?.Invoke(this, _answer);
 
-                // Если приблизись достаточно близко к целовой точке - идём к следующей
+                // Если приблизились достаточно близко к целевой точке - идём к следующей
                 if (MathFunctions.GetDistanceToPoint(aim, best.point) < epsilon)
                 {
                     k = mi;
                     point = points[k];
                     visited[k] = point;
-                    mi = findNearest();
+                    mi = FindNearest();
                     if (mi == -1)
                     {
                         if (k == 0) break;
