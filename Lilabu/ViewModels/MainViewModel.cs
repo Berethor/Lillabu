@@ -94,7 +94,7 @@ namespace Lilabu.ViewModels
 
                 solver.OnStepEvent += (_, m) =>
                 {
-                    Application.Current.Dispatcher.BeginInvoke((Action)(() =>
+                    Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
                     {
                         Output = string.Empty;
                         DisplayModel(m);
@@ -107,7 +107,7 @@ namespace Lilabu.ViewModels
                 {
                     var answer = solver.Solve(Model, checker);
 
-                    Application.Current.Dispatcher.BeginInvoke((Action)(() =>
+                    Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
                     {
                         Output = string.Empty;
                         DisplayModel(answer.Model);

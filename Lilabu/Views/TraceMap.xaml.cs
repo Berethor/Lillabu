@@ -258,8 +258,8 @@ namespace Lilabu.Views
 
         void OnSliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            scaleTransform.ScaleX = e.NewValue;
-            scaleTransform.ScaleY = e.NewValue;
+            scaleTransform.ScaleX = e.NewValue / 20.0;
+            scaleTransform.ScaleY = e.NewValue / 20.0;
 
             var centerOfViewport = new WinPoint(scrollViewer.ViewportWidth / 2, scrollViewer.ViewportHeight / 2);
             lastCenterPositionOnTarget = scrollViewer.TranslatePoint(centerOfViewport, grid);
