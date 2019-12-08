@@ -29,16 +29,17 @@ namespace LilaApp.Algorithm
             var compass = Compass(head);
 
             // Первый этап - расширяем кольцо вверх, вниз и в сторону
-            for (var i = 0; i < 40; i++)
+            const int count = 16;
+            for (var i = 0; i < count; i++)
             {
                 // Блок, к которому добавляем L1
                 var dest = compass.W;
 
                 // Расширение по сторонам
-                if (i < 10) dest = compass.W;
-                else if (i < 20) dest = compass.NW;
-                else if (i < 30) dest = compass.N;
-                else if (i < 40) dest = compass.NE;
+                if (i < count / 4) dest = compass.W;
+                else if (i < 2 * count / 4) dest = compass.NW;
+                else if (i < 3 * count / 4) dest = compass.N;
+                else if (i < 4 * count / 4) dest = compass.NE;
 
                 // Чередование расширений по сторонам
                 //if (i % 4 == 0) dest = compass.W;
@@ -46,7 +47,10 @@ namespace LilaApp.Algorithm
                 //else if (i % 4 == 2) dest = compass.N;
                 //else if (i % 4 == 3) dest = compass.NE;
 
-                dest.AppendSymmetric(new Railway(RailwayType.Line));
+                var chain = new RailwayChain(new Railway(RailwayType.TurnLeft), new Railway(RailwayType.TurnRight));
+                dest.AppendSymmetric(chain);
+
+                //dest.AppendSymmetric(new Railway(RailwayType.Line));
 
                 _answer = ConvertToModel(head);
                 OnStepEvent?.Invoke(this, _answer);
