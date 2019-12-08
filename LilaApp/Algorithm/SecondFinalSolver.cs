@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Collections.Generic;
 
 using LilaApp.Models;
@@ -36,10 +36,14 @@ namespace LilaApp.Algorithm
         #endregion
 
         public event EventHandler<Model> OnStepEvent;
+        public CancellationToken cancellationToken;
 
         private Model _model;
         private Model _answer;
         private IDirectTaskSolver _checker;
+
+        private List<string> _newOrder;
+        private List<TopologyItem> _newTopology;
 
         private static double traceLengthForTurn = Constants.RADIUS * 4;
 
@@ -60,10 +64,13 @@ namespace LilaApp.Algorithm
             var turn = HelperActions.GetRichestSide(points);
 
             HelperActions.InitialRouteBuilder(order,
-                topology, turn);
+                topology, turn, blocks);
 
             _answer.Order = order;
             _answer.Topology = topology;
+
+            _newOrder = new List<string>(order);
+            _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
 
             var trace = TraceBuilder.CalculateTrace(_answer);
             traceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
@@ -81,25 +88,35 @@ namespace LilaApp.Algorithm
             sides[0].actions.Add(("Down", sides[4], false));
             sides[0].actions.Add(("Right", sides[1], false));
             sides[0].actions.Add(("Left", sides[3], false));
+            sides[0].details.Add(trace.Points[0]);
+            sides[0].details.Add(trace.Points[1]);
 
             sides[1].actions.Add(("Up", sides[0], false));
             sides[1].actions.Add(("Down", sides[4], false));
-            sides[1].actions.Add(("Right", sides[3], true));
-            sides[1].actions.Add(("Left", sides[3], false));
+            sides[1].actions.Add(("Right", sides[3], Convert.ToBoolean(turn + 1)));
+            sides[1].actions.Add(("Left", sides[3], !Convert.ToBoolean(turn + 1)));
+            sides[1].details.Add(trace.Points[2]);
+            sides[1].details.Add(trace.Points[3]);
 
             sides[2].actions.Add(("Up", sides[0], true));
             sides[2].actions.Add(("Down", sides[4], true));
             sides[2].actions.Add(("Right", sides[1], false));
             sides[2].actions.Add(("Left", sides[3], false));
+            sides[2].details.Add(trace.Points[4]);
+            sides[2].details.Add(trace.Points[5]);
 
             sides[3].actions.Add(("Up", sides[0], false));
             sides[3].actions.Add(("Down", sides[4], false));
-            sides[3].actions.Add(("Right", sides[1], false));
+            sides[3].actions.Add(("Right", sides[1], true));
+            sides[3].actions.Add(("Left", sides[1], true));
+            sides[3].details.Add(trace.Points[6]);
+            sides[3].details.Add(trace.Points[7]);
 
             sides[4].actions.Add(("Up", sides[0], false));
             sides[4].actions.Add(("Down", sides[2], true));
             sides[4].actions.Add(("Right", sides[1], false));
             sides[4].actions.Add(("Left", sides[3], false));
+            sides[4].details.Add(trace.Points[0]);
 
             double minLength = double.MaxValue;
             double minRouteLength = double.MaxValue;
@@ -107,94 +124,159 @@ namespace LilaApp.Algorithm
             var nextPoint = new Point(0, 0);
             var plannedPoint = new Point(0, 0);
 
+            var pointsCopy = points;
 
-            while (true)
+            var circleCentre = new Point(turn * Constants.RADIUS, 0);
+            pointsCopy = pointsCopy.Where(a =>
             {
-                foreach (var waypoint in points)
+                if (MathFunctions.GetDistanceToPoint(circleCentre, a) < Constants.RADIUS)
                 {
-                    double length = 0;
-                    minRouteLength = double.MaxValue;
-                    minLength = double.MaxValue;
+                    return false;
+                }
 
-                    foreach (var detailPoint in trace.Points)
+                return true;
+            }).ToList();
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    foreach (var waypoint in pointsCopy)
                     {
-                        length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
+                        double length = 0;
+                        minRouteLength = double.MaxValue;
+                        minLength = double.MaxValue;
 
-                        if (length < minLength)
+                        foreach (var detailPoint in trace.Points)
                         {
-                            minLength = length;
-                            plannedPoint = detailPoint;
+                            length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
+
+                            if (length < minLength)
+                            {
+                                minLength = length;
+                                plannedPoint = detailPoint;
+                            }
+                        }
+
+                        if (minLength < 0.5)
+                        {
+                            pointsCopy = pointsCopy.Where(a => !a.Equals(waypoint)).ToList();
+                            continue;
+                        }
+
+                        if (minLength < minRouteLength)
+                        {
+                            minRouteLength = minLength;
+                            detail = plannedPoint;
+                            nextPoint = waypoint;
                         }
                     }
 
-                    if (minLength < 1)
+                    if (pointsCopy.Count == 0)
                     {
-                        continue;
-                    }
-
-                    if (minLength < minRouteLength)
-                    {
-                        minRouteLength = minLength;
-                        detail = plannedPoint;
-                        nextPoint = waypoint;
-                    }
-                }
-
-                string expandSide = GetExpandSide(ref detail, nextPoint);
-
-                void SearchSide(RouteSide secondSide)
-                {
-                    foreach (var action in secondSide.actions
-                        .Where(action => action.command == expandSide)
-                        .Select(action => action))
-                    {
-                        AddElement("L1", action.Item2, out pointShift, order, topology);
-                        UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
-                    }
-                }
-
-                for (int i = 0; i < sides.Count; i++)
-                {
-                    if (detail.Angle == sides[i].StartPoint.Angle &&
-                        (detail.X - sides[i].StartPoint.X < 1||
-                         detail.Y - sides[i].StartPoint.Y < 1))
-                    {
-                        foreach (var action in sides[i].actions
-                            .Where(action => action.command == expandSide)
-                            .Select(action => action))
-                        {
-                            AddElement("L1", action.Item2, out pointShift, order, topology);
-                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
-                            SearchSide(action.Item2);
-                        }
-
                         break;
                     }
-                }
-                _answer.Order = order;
-                _answer.Topology = topology;
 
-                OnStepEvent.Invoke(this, _answer);
-                trace = TraceBuilder.CalculateTrace(_answer);
-                var newTraceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+                    (string side, int length) expand = GetExpandData(ref detail, nextPoint);
 
-                if (traceIncome < newTraceIncome)
-                {
-                    traceIncome = newTraceIncome;
-                    continue;
+                    void SearchSide(RouteSide secondSide, string detailName)
+                    {
+                        foreach (var action in secondSide.actions
+                            .Where(action => action.command == expand.side)
+                            .Select(action => action))
+                        {
+                            AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
+                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
+                        }
+                    }
+
+                    for (int i = 0; i < sides.Count; i++)
+                    {
+                        if (IsDetailBelongsToSide(sides, detail, i))
+                        {
+                            foreach (var action in sides[i].actions
+                                .Where(action => action.command == expand.side)
+                                .Select(action => action))
+                            {
+                                if (action.Item2.actions
+                                    .Where(a => a.command == expand.side && a.action)
+                                    .Count() != 0)
+                                {
+                                    var directBlocks = blocks.FindAll(a => a.Name.StartsWith("L"));
+
+                                    string detailName = GetDetail(expand, directBlocks);
+
+                                    AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
+                                    UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
+                                    SearchSide(action.Item2, detailName);
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+                    _answer.Order = order;
+                    _answer.Topology = topology;
+                    OnStepEvent.Invoke(this, _answer);
+
+                    trace = TraceBuilder.CalculateTrace(_answer);
+                    var newTraceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+
+                    if (traceIncome < newTraceIncome)
+                    {
+                        traceIncome = newTraceIncome;
+                        _newOrder = new List<string>(order);
+                        _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
+                        continue;
+                    }
                 }
-                break;
+            }
+            catch (Exception ex)
+            {
+
             }
 
-            _answer.Order = order;
-            _answer.Topology = topology;
+            _answer.Order = _newOrder;
+            _answer.Topology = _newTopology;
 
             OnStepEvent.Invoke(this, _answer);
         }
 
-        private static void AddElement(string name, RouteSide side, out Point pointShift, List<string> order, List<TopologyItem> topology)
+        private static bool IsDetailBelongsToSide(List<RouteSide> sides, Point detail, int i)
+        {
+            foreach (var d in sides[i].details)
+            {
+                if (detail.Equals(d))
+                    return true;
+            }
+            return false;
+        }
+
+        private static string GetDetail((string side, int length) expand, List<Block> directBlocks)
+        {
+            string detailName = directBlocks[directBlocks.Count() - 1].Name;
+
+            foreach (var block in directBlocks)
+            {
+                var blockLength = int.Parse(block.Name[1].ToString());
+
+                if ((expand.length - blockLength) < 0.5)
+                {
+                    detailName = "L" + blockLength;
+                    break;
+                }
+            }
+
+            return detailName;
+        }
+
+        private static void AddElement(string name, RouteSide side, out Point pointShift, List<string> order, List<TopologyItem> topology, List<Block> blocks)
         {
             var index = side.StartIndex;
+
+            if (blocks.Find(a => a.Name == name).Count < 1)
+                throw new Exception("Кончились блоки");
+
             order.Insert(index, name);
             topology.Insert(index, new TopologyItem(index - 1, index, 1));
 
@@ -204,12 +286,18 @@ namespace LilaApp.Algorithm
                 topology[i].SecondBlock++;
             }
 
+            blocks.Find(a => a.Name == name).Count -= 1;
+
             side.EndPoint = TraceBuilder.MakeStep(side.EndPoint, name, 1);
 
             var step = TraceBuilder.MakeStep(side.StartPoint, name, 1);
 
             pointShift = new Point(step.X - side.StartPoint.X,
                 step.Y - side.StartPoint.Y);
+
+            side.AddShiftToDetails(pointShift, 1);
+
+            side.details.Add(step);
 
             topology[topology.Count - 1].FirstBlock++;
         }
@@ -219,46 +307,48 @@ namespace LilaApp.Algorithm
             for (int j = i + 1; j < sides.Count; j++)
             {
                 sides[j].StartIndex++;
-                if(sides[j].EndIndex != 0)
+                if (sides[j].EndIndex != 0)
                     sides[j].EndIndex++;
                 sides[j].StartPoint.X += pointShift.X;
                 sides[j].StartPoint.Y += pointShift.Y;
                 sides[j].EndPoint.X += pointShift.X;
                 sides[j].EndPoint.Y += pointShift.Y;
+
+                sides[j].AddShiftToDetails(pointShift, 0);
             }
         }
 
-        private static string GetExpandSide(ref Point detail, Point nextPoint)
+        private static (string, int) GetExpandData(ref Point detail, Point nextPoint)
         {
-            string expandSide = string.Empty;
+            (string, int) expandData = (string.Empty, 0);
             var xShift = nextPoint.X - detail.X;
             var yShift = nextPoint.Y - detail.Y;
 
             if (Math.Abs(xShift) < Math.Abs(yShift)
-                && Math.Abs(yShift) >= 1)
+                && Math.Abs(yShift) >= 0.5)
             {
                 if (yShift > 0)
                 {
-                    expandSide = "Up";
+                    expandData = ("Up", (int)Math.Abs(yShift));
                 }
                 else
                 {
-                    expandSide = "Down";
+                    expandData = ("Down", (int)Math.Abs(yShift));
                 }
             }
-            else if (Math.Abs(xShift) >= 1)
+            else if (Math.Abs(xShift) >= 0.5)
             {
                 if (xShift > 0)
                 {
-                    expandSide = "Right";
+                    expandData = ("Right", (int)Math.Abs(xShift));
                 }
                 else
                 {
-                    expandSide = "Left";
+                    expandData = ("Left", (int)Math.Abs(xShift));
                 }
             }
 
-            return expandSide;
+            return expandData;
         }
     }
 }

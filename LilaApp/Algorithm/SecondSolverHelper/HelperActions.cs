@@ -15,7 +15,7 @@ namespace LilaApp.Algorithm.SecondSolverHelper
         /// <param name="order"></param>
         /// <param name="topology"></param>
         /// <param name="turn"></param>
-        public static void InitialRouteBuilder(List<string> order, List<TopologyItem> topology, int turn)
+        public static void InitialRouteBuilder(List<string> order, List<TopologyItem> topology, int turn, List<Block> blocks)
         {
             int i = 0;
 
@@ -26,7 +26,7 @@ namespace LilaApp.Algorithm.SecondSolverHelper
                 "T4","T4",
                 "T4","T4"
             });
-
+            blocks.Find(a => a.Name == "T4").Count -= 8;
             while (i < order.Count)
             {
                 topology.Add(new TopologyItem(i, i + 1, turn));
