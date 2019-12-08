@@ -63,6 +63,7 @@ namespace LilaApp.Algorithm
             var sides = new List<RouteSide>();
 
             var turn = HelperActions.GetRichestSide(points);
+            turn = 1;
 
             HelperActions.InitialRouteBuilder(order,
                 topology, turn, blocks);
@@ -79,11 +80,11 @@ namespace LilaApp.Algorithm
             oldOrder = order.GetRange(0, order.Count);
             oldTopology = topology.GetRange(0, topology.Count);
 
-            sides.Add(new RouteSide(trace.Points[0], 0));
-            sides.Add(new RouteSide(trace.Points[2], 2));
-            sides.Add(new RouteSide(trace.Points[4], 4));
-            sides.Add(new RouteSide(trace.Points[6], 6));
-            sides.Add(new RouteSide(trace.Points[0], trace.Points[0], 8, 0));
+            sides.Add(new RouteSide(trace.Points[0], 0, 4));
+            sides.Add(new RouteSide(trace.Points[2], 2, 4));
+            sides.Add(new RouteSide(trace.Points[4], 4, 4));
+            sides.Add(new RouteSide(trace.Points[6], 6, 4));
+            sides.Add(new RouteSide(trace.Points[0], trace.Points[0], 8, 0, 4));
 
             sides[0].actions.Add(("Up", sides[2], true));
             sides[0].actions.Add(("Down", sides[4], false));
@@ -119,6 +120,149 @@ namespace LilaApp.Algorithm
             sides[4].actions.Add(("Left", sides[3], false));
             sides[4].details.Add(trace.Points[0]);
 
+            int index = 0;
+            if (blocks.Find(a => a.Name.StartsWith("B")).Count > 0)
+            {
+                var angle = trace.Points[index].Angle;
+
+                var sideIndex = sides.FindIndex(a =>
+                           Math.Abs(a.EndIndex - index) == Math.Abs(a.StartIndex - index));
+
+                for(int i = sideIndex; i >= 0; i--)
+                {
+                    sides[sideIndex].SideEndIndex += 4;
+                }
+
+                order.Remove(order[index]);
+                order.Remove(order[index]);
+                topology.Remove(topology[index]);
+                topology.Remove(topology[index]);
+
+                for (int i = index; i < topology.Count - 1; i++)
+                {
+                    topology[i].FirstBlock -= 2;
+                    topology[i].SecondBlock -= 2;
+                }
+
+                topology[topology.Count - 1].FirstBlock -= 2;
+
+                order.InsertRange(index, new string[]
+                {
+                    "L3","L3",
+                    "T4","T4",
+                    "T4","T4",
+                    "T4","T4",
+                    "L1","B1",
+                    "L1"
+                });
+
+                blocks.Find(a => a.Name == "T4").Count -= 6;
+                blocks.Find(a => a.Name == "B1").Count -= 1;
+                blocks.Find(a => a.Name == "L3").Count -= 2;
+                blocks.Find(a => a.Name == "L1").Count -= 2;
+
+                topology.InsertRange(
+                    index, new TopologyItem[]
+                    {
+                    new TopologyItem(index, index + 1, 1),
+                    new TopologyItem(index + 1, index + 2, 1),
+                    new TopologyItem(index + 2, index + 3, turn*-1),
+                    new TopologyItem(index + 3, index + 4, turn*-1),
+                    new TopologyItem(index + 4, index + 5, turn*-1),
+                    new TopologyItem(index + 5, index + 6, turn*-1),
+                    new TopologyItem(index + 6, index + 7, turn*-1),
+                    new TopologyItem(index + 7, index + 8, turn*-1),
+                    new TopologyItem(index + 8, index + 9, 1),
+                    new TopologyItem(index + 9, index + 10, 1),
+                    new TopologyItem(index + 10, index + 11, 1),
+                    });
+
+                for (int i = index + 11; i < topology.Count - 1; i++)
+                {
+                    topology[i].FirstBlock += 11;
+                    topology[i].SecondBlock += 11;
+                }
+
+                topology[topology.Count - 1].FirstBlock += 11;
+
+                _answer.Order = order;
+                _answer.Topology = topology;
+
+                OnStepEvent.Invoke(this, _answer);
+                trace = TraceBuilder.CalculateTrace(_answer);
+
+                var pSidesCount = sides.Count;
+
+                sides.Add(new RouteSide(
+                    trace.Points[index + 1],
+                    trace.Points[index + 2],
+                    index + 1, index + 2, pSidesCount + 4));
+
+                sides[sides.Count - 1].details.Add(trace.Points[index + 1]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 2]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 3]);
+
+                sides.Add(new RouteSide(
+                    trace.Points[index + 4],
+                    index + 4, pSidesCount + 4));
+
+                sides[sides.Count - 1].details.Add(trace.Points[index + 4]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 5]);
+
+                sides.Add(new RouteSide(
+                    trace.Points[index + 6],
+                    index + 6, pSidesCount + 4));
+
+                sides[sides.Count - 1].details.Add(trace.Points[index + 6]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 7]);
+
+                sides.Add(new RouteSide(
+                    trace.Points[index + 8],
+                    trace.Points[index + 10],
+                    index + 8, index + 10, pSidesCount + 4));
+
+                sides[sides.Count - 1].details.Add(trace.Points[index + 8]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 9]);
+                sides[sides.Count - 1].details.Add(trace.Points[index + 10]);
+
+                if (angle == 0)
+                {
+                    sides[pSidesCount].actions.Add(("Up", sides[pSidesCount + 2], true));
+                    sides[pSidesCount].actions.Add(("Down", sides[2], false));
+                    sides[pSidesCount].actions.Add(("Right", sides[1], false));
+                    sides[pSidesCount].actions.Add(("Left", sides[pSidesCount + 1], false));
+
+                    sides[pSidesCount + 1].actions.Add(("Up", sides[pSidesCount + 2], false));
+                    sides[pSidesCount + 1].actions.Add(("Down", sides[2], false));
+                    sides[pSidesCount + 1].actions.Add(("Right", sides[1], false));
+                    sides[pSidesCount + 1].actions.Add(("Left", sides[pSidesCount + 3], true));
+
+                    sides[pSidesCount + 2].actions.Add(("Up", sides[pSidesCount], true));
+                    sides[pSidesCount + 2].actions.Add(("Down", sides[2], false));
+                    sides[pSidesCount + 2].actions.Add(("Right", sides[1], false));
+                    sides[pSidesCount + 2].actions.Add(("Left", sides[pSidesCount + 1], false));
+
+                    sides[pSidesCount + 3].actions.Add(("Up", sides[pSidesCount], false));
+                    sides[pSidesCount + 3].actions.Add(("Down", sides[2], false));
+                    sides[pSidesCount + 3].actions.Add(("Right", sides[1], false));
+                    sides[pSidesCount + 3].actions.Add(("Left", sides[pSidesCount + 1], true));
+                }
+
+                for (int i = 1; i < pSidesCount; i++)
+                {
+                    sides[i].StartIndex += 9;
+
+                    if (sides[i].EndIndex != 0)
+                        sides[i].EndIndex += 9;
+                }
+            }
+
+            _answer.Order = order;
+            _answer.Topology = topology;
+
+            _newOrder = new List<string>(order);
+            _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
+
             double minLength = double.MaxValue;
             double minRouteLength = double.MaxValue;
             var detail = new Point(0, 0);
@@ -142,10 +286,11 @@ namespace LilaApp.Algorithm
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    minRouteLength = double.MaxValue;
+
                     foreach (var waypoint in pointsCopy)
                     {
                         double length = 0;
-                        minRouteLength = double.MaxValue;
                         minLength = double.MaxValue;
 
                         foreach (var detailPoint in trace.Points)
@@ -187,7 +332,7 @@ namespace LilaApp.Algorithm
                             .Select(action => action))
                         {
                             AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
-                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
+                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
                         }
                     }
 
@@ -208,7 +353,7 @@ namespace LilaApp.Algorithm
                                     string detailName = GetDetail(expand, directBlocks);
 
                                     AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
-                                    UpdateSides(pointShift, sides, sides.IndexOf(action.Item2));
+                                    UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
                                     SearchSide(action.Item2, detailName);
                                 }
                             }
@@ -216,6 +361,7 @@ namespace LilaApp.Algorithm
                             break;
                         }
                     }
+
                     _answer.Order = order;
                     _answer.Topology = topology;
                     OnStepEvent.Invoke(this, _answer);
@@ -256,14 +402,20 @@ namespace LilaApp.Algorithm
 
         private static string GetDetail((string side, int length) expand, List<Block> directBlocks)
         {
-            string detailName = directBlocks[directBlocks.Count() - 1].Name;
+            var lastBlock = directBlocks.Count() - 1;
+            
+            string detailName = directBlocks[lastBlock].Name;
+
+            int minLength = int.Parse(directBlocks[lastBlock].Name[1].ToString());
 
             foreach (var block in directBlocks)
             {
                 var blockLength = int.Parse(block.Name[1].ToString());
+                var length = Math.Abs(expand.length - blockLength);
 
-                if ((expand.length - blockLength) < 0.5)
+                if (length < minLength)
                 {
+                    minLength = length;
                     detailName = "L" + blockLength;
                     break;
                 }
@@ -280,15 +432,33 @@ namespace LilaApp.Algorithm
                 throw new Exception("Кончились блоки");
 
             order.Insert(index, name);
-            topology.Insert(index, new TopologyItem(index - 1, index, 1));
-
-            for (int i = index; i < topology.Count - 1; i++)
+            if (index != 0)
             {
-                topology[i].FirstBlock++;
-                topology[i].SecondBlock++;
-            }
+                topology.Insert(index, new TopologyItem(index - 1, index, 1));
 
-            blocks.Find(a => a.Name == name).Count -= 1;
+                for (int i = index; i < topology.Count - 1; i++)
+                {
+                    topology[i].FirstBlock++;
+                    topology[i].SecondBlock++;
+                }
+            }
+            else
+            {
+                topology.Insert(index, new TopologyItem(index, index + 1, 1));
+
+                for (int i = index + 1; i < topology.Count - 1; i++)
+                {
+                    topology[i].FirstBlock++;
+                    topology[i].SecondBlock++;
+                }
+            }
+            var block = blocks.Find(a => a.Name == name);
+            block.Count -= 1;
+
+            if(block.Count == 0)
+            {
+                blocks.Remove(block);
+            }
 
             side.EndPoint = TraceBuilder.MakeStep(side.EndPoint, name, 1);
 
@@ -301,15 +471,25 @@ namespace LilaApp.Algorithm
 
             side.details.Add(step);
 
+            side.EndIndex++;
+
             topology[topology.Count - 1].FirstBlock++;
         }
 
-        private static void UpdateSides(Point pointShift, List<RouteSide> sides, int i)
+        private static void UpdateSides(Point pointShift, List<RouteSide> sides, int i, int endIndex)
         {
-            for (int j = i + 1; j < sides.Count; j++)
+            var maxValue = endIndex + 1;
+
+            if(maxValue > sides.Count)
             {
-                sides[j].StartIndex++;
-                if (sides[j].EndIndex != 0)
+                maxValue = sides.Count;
+            }
+
+            for (int j = i + 1; j < maxValue; j++)
+            {
+                if (j != 0)
+                    sides[j].StartIndex++;
+                if (j != 4)
                     sides[j].EndIndex++;
                 sides[j].StartPoint.X += pointShift.X;
                 sides[j].StartPoint.Y += pointShift.Y;
@@ -331,22 +511,22 @@ namespace LilaApp.Algorithm
             {
                 if (yShift > 0)
                 {
-                    expandData = ("Up", (int)Math.Abs(yShift));
+                    expandData = ("Up", (int)Math.Round(Math.Abs(yShift)));
                 }
                 else
                 {
-                    expandData = ("Down", (int)Math.Abs(yShift));
+                    expandData = ("Down", (int)Math.Round(Math.Abs(yShift)));
                 }
             }
             else if (Math.Abs(xShift) >= 0.5)
             {
                 if (xShift > 0)
                 {
-                    expandData = ("Right", (int)Math.Abs(xShift));
+                    expandData = ("Right", (int)Math.Round(Math.Abs(xShift)));
                 }
                 else
                 {
-                    expandData = ("Left", (int)Math.Abs(xShift));
+                    expandData = ("Left", (int)Math.Round(Math.Abs(xShift)));
                 }
             }
 
