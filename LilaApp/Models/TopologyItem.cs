@@ -19,7 +19,12 @@ namespace LilaApp.Models
             SecondBlock = secondBlock;
             Direction = direction;
         }
-
+        public TopologyItem(TopologyItem item)
+        {
+            FirstBlock = item.FirstBlock;
+            SecondBlock = item.SecondBlock;
+            Direction = item.Direction;
+        }
         public override string ToString()
         {
             return $"{FirstBlock} {SecondBlock} {Direction}";

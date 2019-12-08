@@ -126,6 +126,7 @@ namespace Lilabu.ViewModels
             _solvers = new IFinalTaskSolver[]
             {
                 new FirstFinalSolver(),
+                new SecondFinalSolver(), 
                 new ThirdFinalSolver(),
             };
 
@@ -134,6 +135,7 @@ namespace Lilabu.ViewModels
             RunCommand = new BaseCommand(() =>
             {
                 var checker = new DirectTaskSolver();
+
                 var solver = _solvers.First(_ => _.GetType().Name == SelectedSolver);
 
                 solver.OnStepEvent += DisplayModelStep;
