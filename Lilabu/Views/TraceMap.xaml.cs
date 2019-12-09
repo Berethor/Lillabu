@@ -182,6 +182,21 @@ namespace Lilabu.Views
                 foreach (var route in MainVM.Model.Points)
                 {
                     AddEllipse(route, Brushes.Blue);
+
+                    var x1 = padding + multiplier * (route.X - minPoint.X);
+                    var y1 = padding + multiplier * (route.Y - minPoint.Y);
+                    
+                    // Стоимость точек
+                    var textBox = new TextBlock()
+                    {
+                        FontSize = 8,
+                        Text = $"{route.Price:F0}",
+                        LayoutTransform = new ScaleTransform(1, -1),
+                        Margin = new Thickness(x1, y1, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                    };
+                    grid_Map.Children.Add(textBox);
                 }
             }
         }
