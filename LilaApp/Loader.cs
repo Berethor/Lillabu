@@ -466,7 +466,7 @@ namespace LilaApp
         #region Private Constants
 
         // Думаю, что это можно (но не обязательно) будет в конфиг файл завернуть
-        private const string ALLOWED_CHARS = "LTYB";
+        private const string ALLOWED_CHARS = "LTYBt";
 
         private const int REQUIRED_NUM_OF_ZEROS = 2;
 

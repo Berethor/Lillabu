@@ -58,6 +58,9 @@ namespace Lilabu.ViewModels
         /// </summary>
         public BaseCommand RunCommand { get; }
 
+
+        public JoystickViewModel Joystick { get; }
+
         #endregion
 
         /// <summary>
@@ -109,7 +112,7 @@ namespace Lilabu.ViewModels
                 FileLoaderVm.InputText = model.Serialize();
             }));
 
-            if (sender != null)
+            if (sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
             {
                 // Задержка отрисовки для анимации
                 Thread.Sleep(100);
@@ -123,11 +126,14 @@ namespace Lilabu.ViewModels
         {
             Title = "Lilabu Application";
 
+            Joystick = new JoystickViewModel();
+
             _solvers = new IFinalTaskSolver[]
             {
                 new FirstFinalSolver(),
                 new SecondFinalSolver(), 
                 new ThirdFinalSolver(),
+                new WasdFinalSolver(Joystick), 
             };
 
             SelectedSolver = _solvers[1].GetType().Name;
