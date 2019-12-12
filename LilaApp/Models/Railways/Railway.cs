@@ -135,9 +135,18 @@ namespace LilaApp.Models.Railways
         public Railway(RailwayType type)
         {
             Type = type;
-
+            End = CalculateEndPoint();
             Dimensions = new TemplateDimensions(this, false);
         }
+
+        public static Railway L1 => new Railway(RailwayType.L1);
+        public static Railway L2 => new Railway(RailwayType.L2);
+        public static Railway L3 => new Railway(RailwayType.L3);
+        public static Railway L4 => new Railway(RailwayType.L4);
+        public static Railway T4R => new Railway(RailwayType.T4R);
+        public static Railway T4L => new Railway(RailwayType.T4L);
+        public static Railway T8R => new Railway(RailwayType.T8R);
+        public static Railway T8L => new Railway(RailwayType.T8L);
 
         #endregion
 
@@ -175,6 +184,94 @@ namespace LilaApp.Models.Railways
                 case RailwayType.B1: return ("B1", 1);
                 default: throw new ArgumentOutOfRangeException();
             }
+        }
+
+        #endregion
+
+        #region Implementation of IScalableTemplate
+
+        /// <summary>
+        /// Есть ли возможность изменить размер шаблона
+        /// в указанном или любом направлении
+        /// </summary>
+        /// <param name="angle">Направление, если null - то любое</param>
+        public bool CanScale(double? angle = null)
+        {
+            // Если нет симметричного блока, расширить нельзя
+            if (Symmetric == null) return false;
+
+            // TODO: добавить проверку на наличие доступных прямых блоков (L1, L2, L3, L4) 
+
+            // Если указано определённое направление масштабирования
+            if (angle != null)
+            {
+                // То увеличить можно, только в случае совпадения направления блока или его симметричного элемента
+                return (Math.Abs((double) angle - End.Angle) < Constants.Precision ||
+                        Math.Abs((double) angle - Symmetric.End.Angle) < Constants.Precision);
+            }
+
+            // Если направление не задано, то гарантированно можно увеличить, присоединив прямой элемент
+            return true;
+        }
+
+        /// <summary>
+        /// Вызвать изменение размера
+        /// в указанном или любом направлении
+        /// </summary>
+        /// <param name="angle">Направление, если null - то любое</param>
+        public bool TryScale(double? angle = null)
+        {
+            if (!CanScale(angle)) return false;
+
+            // TODO: выбрать блок среди доступных (L1, L2, L3, L4), т.к. L1 может не быть
+
+            // Добавляем прямой блок 
+            this.AppendSymmetric(new Railway(RailwayType.L1));
+
+            return true;
+        }
+
+        #endregion
+
+        #region Implementation of IMutableTemplate
+
+        /// <summary>
+        /// Есть ли возможность применить мутацию к шаблону
+        /// </summary>
+        /// <param name="dimensions">Размеры шаблона, который хотим вставить. Если null - то любой</param>
+        /// <returns></returns>
+        public bool CanMutate(TemplateDimensions dimensions = null)
+        {
+            // Если размеры предлагаемого шаблона не совпадают с размерами текущего блока, то применить мутацию невозможно
+            if (dimensions != null && dimensions.Output != this.Dimensions.Output) return false;
+            
+            return (Type == RailwayType.T4L || Type == RailwayType.T4R);
+        }
+
+        /// <summary>
+        /// Применить мутацию
+        /// </summary>
+        /// <param name="template">Шаблон для вставки. Если null - то применить любую мутацию на своё усмотрение</param>
+        public bool TryMutate(IRailwayTemplate template = null)
+        {
+            if (!CanMutate(template?.Dimensions)) return false;
+
+            if (template != null)
+            {
+                // Присоединяем новый шаблон
+                if (Prev != null) Prev.Next = template;
+                if (Next != null) Next.Prev = template;
+
+                // Разрываем связь симметрии
+                Symmetric.Symmetric = null;
+
+                return true;
+            }
+
+            return false;
+
+            // TODO: произвести вставку моста с кольцом
+            // Some magic code will be here
         }
 
         #endregion

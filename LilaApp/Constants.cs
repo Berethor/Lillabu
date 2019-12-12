@@ -35,8 +35,13 @@ namespace LilaApp
         public const double Y_LENGTH = 1;
 
         /// <summary>
-        /// Допустимая погрещность
+        /// Допустимая погрешность
         /// </summary>
         public const double EPSILON = 0.01;
+
+        /// <summary>
+        /// Точность измерения дробных чисел
+        /// </summary>
+        public static double Precision { get; } = 10E-10;
     }
 }

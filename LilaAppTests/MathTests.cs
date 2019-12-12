@@ -32,7 +32,7 @@ namespace LilaAppTests
         }
 
         [TestMethod]
-        public void Test_2_Sements()
+        public void Test_2_Segments()
         {
             var A = new Point(x: 0, y: 0);
             var B = new Point(x: 0, y: 4);

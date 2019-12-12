@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace LilaApp.Models.Railways
 {
@@ -24,7 +25,7 @@ namespace LilaApp.Models.Railways
             // Если у существующего шаблона было продолжение,
             // то присоединяем его к присоединяемому шаблону
             // TODO: Если у присоединяемого блока есть продолжение, то оно потеряется!
-            if (next != null)
+            if (next != null && next != second)
             {
                 second.Next = next;
             }
@@ -72,7 +73,7 @@ namespace LilaApp.Models.Railways
         /// <param name="head">Указатель на начало списка</param>
         /// <param name="initial">Исходные данные модели (блоки DATA, ROUTES)</param>
         /// <returns></returns>
-        public static Model ConvertToModel(this Railway head, Model initial = null)
+        public static Model ConvertToModel(this IRailwayTemplate head, Model initial = null)
         {
             // Копируем исходные данные
             var model = Model.Copy(initial);
@@ -81,7 +82,7 @@ namespace LilaApp.Models.Railways
 
             var k = 1;
             model.Topology.Add(new TopologyItem(0, 1, 1));
-            var template = head.Next;
+            var template = head;
             do
             {
                 // Разбиваем шаблон железной дороги на отдельные блоки
@@ -89,6 +90,12 @@ namespace LilaApp.Models.Railways
                 for (var i = 0; i < railways.Count; i++)
                 {
                     var railway = railways[i];
+
+                    if (railway.Type == RailwayType.L0)
+                    {
+                        k--;
+                        continue;
+                    }
 
                     var source = k + i;
                     var destination = railway.Next.IsHead() ? 0 : k + i + 1;
@@ -102,7 +109,9 @@ namespace LilaApp.Models.Railways
                 template = template.Next;
                 k += railways.Count;
             }
-            while (!template.IsHead());
+            while (template != null);
+
+            model.Topology.Last().SecondBlock = 0;
 
             return model;
         }

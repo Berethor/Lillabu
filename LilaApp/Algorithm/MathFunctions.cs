@@ -73,7 +73,8 @@ namespace LilaApp.Algorithm
         {
             return new Point(
                 x: point.X * Math.Cos(angle) + point.Y * Math.Sin(angle),
-                y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle)
+                y: point.Y * Math.Cos(angle) - point.X * Math.Sin(angle),
+                point.Angle - angle
             );
         }
         public static double GetDistanceToPoint(Point detailPoint, Point waypoint)

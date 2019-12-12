@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using LilaApp.Algorithm;
 
+[assembly: InternalsVisibleTo("LilaAppTests")]
 namespace LilaApp.Models.Railways
 {
     /// <summary>
@@ -12,10 +16,29 @@ namespace LilaApp.Models.Railways
     {
         #region Fields
 
-        private readonly Railway[] _railways;
+        private IRailwayTemplate _head;
+        private IRailwayTemplate _tail;
 
         private Point _start;
 
+        private IRailwayTemplate _next;
+        private IRailwayTemplate _prev;
+
+        /// <summary>
+        /// Индексатор
+        /// </summary>
+        public IRailwayTemplate this[int index] {
+            get {
+                var item = _head;
+
+                for (var i = 0; i < Math.Abs(index); i++)
+                {
+                    item = (index > 0) ? item.Next : item.Prev;
+                }
+
+                return item;
+            }
+        }
         #endregion
 
         #region .ctor
@@ -24,9 +47,19 @@ namespace LilaApp.Models.Railways
         /// Цепочка блоков рельсов
         /// </summary>
         /// <param name="railways">Блоки рельсов</param>
-        public RailwayChain(params Railway[] railways)
+        public RailwayChain(params IRailwayTemplate[] railways)
         {
-            _railways = railways;
+            for (var i = 0; i < railways.Length; i++)
+            {
+                if (i == 0)
+                {
+                    _head = railways[i];
+                    _tail = _head;
+                    continue;
+                }
+
+                _tail = _tail.Append(railways[i]);
+            }
 
             Dimensions = new TemplateDimensions(this, false);
         }
@@ -38,12 +71,24 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Следующий шаблон железной дороги
         /// </summary>
-        public IRailwayTemplate Next { get; set; }
+        public IRailwayTemplate Next {
+            get => _next;
+            set {
+                _next = value;
+                _tail.Next = value;
+            }
+        }
 
         /// <summary>
         /// Предыдущий шаблон железной дороги
         /// </summary>
-        public IRailwayTemplate Prev { get; set; }
+        public IRailwayTemplate Prev {
+            get => _prev;
+            set {
+                _prev = value;
+                _head.Prev = value;
+            }
+        }
 
         /// <summary>
         /// Точка начала текущего шаблона железной дороги
@@ -53,17 +98,17 @@ namespace LilaApp.Models.Railways
             set {
                 _start = value;
 
-                for (var i = 0; i < _railways.Length; i++)
+                for (var element = _head; element != _tail.Next; element = element.Next)
                 {
-                    if (i == 0)
+                    if (element == _head)
                     {
                         // Задаём стартовую точку для первого блока в цепочке
-                        _railways[i].Start = _start;
+                        element.Start = _start;
                     }
                     else
                     {
                         // Присоединяем остальные блоки друг за другом,
-                        _railways[i - 1].Append(_railways[i]);
+                        element.Prev.Append(element);
                     }
                 }
             }
@@ -72,7 +117,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка окончания текущего шаблона железной дороги
         /// </summary>
-        public Point End => _railways.LastOrDefault()?.End ?? Point.Zero;
+        public Point End => _tail.End;
 
         /// <summary>
         /// Шаблон железной дороги, симметричный текущему.
@@ -89,9 +134,14 @@ namespace LilaApp.Models.Railways
         /// <returns></returns>
         public IRailwayTemplate Clone()
         {
-            var copiedRailways = (Railway[])_railways.Clone();
+            var list = new List<IRailwayTemplate>();
 
-            return new RailwayChain(copiedRailways);
+            for (var element = _head; element != _tail.Next; element = element.Next)
+            {
+                list.Add(element.Clone());
+            }
+
+            return new RailwayChain(list.ToArray());
         }
 
         /// <summary>
@@ -100,7 +150,23 @@ namespace LilaApp.Models.Railways
         /// <returns></returns>
         public List<Railway> GetRailways()
         {
-            return _railways.ToList();
+            var list = new List<Railway>();
+
+            for (var element = _head; element != _tail.Next; element = element.Next)
+            {
+                switch (element)
+                {
+                    case Railway railway:
+                        list.Add(railway);
+                        break;
+
+                    default:
+                        list.AddRange(element.GetRailways());
+                        break;
+                }
+            }
+
+            return list;
         }
 
         /// <summary>
@@ -109,5 +175,159 @@ namespace LilaApp.Models.Railways
         public TemplateDimensions Dimensions { get; }
 
         #endregion
+
+        #region Implementation of IScalableTemplate
+
+        /// <summary>
+        /// Есть ли возможность изменить размер шаблона
+        /// в указанном или любом направлении
+        /// </summary>
+        /// <param name="angle">Направление, если null - то любое</param>
+        public bool CanScale(double? angle = null)
+        {
+            var applicants = new List<IRailwayTemplate>();
+
+            for (var element = _head; element != _tail.Next; element = element.Next)
+            {
+                if (element.Symmetric != null)
+                {
+                    applicants.Add(element);
+                }
+            }
+
+            // Если указано конкретное направление
+            if (angle != null)
+            {
+                applicants = applicants.Where(_ => Math.Abs((double)angle - _.End.Angle) < Constants.Precision).ToList();
+
+                return applicants.Any();
+            }
+
+            // Если направление не задано
+            return applicants.Any(_ => _.Symmetric != null);
+        }
+
+        /// <summary>
+        /// Вызвать изменение размера
+        /// в указанном или любом направлении
+        /// </summary>
+        /// <param name="angle">Направление, если null - то любое</param>
+        public bool TryScale(double? angle = null)
+        {
+            if (!CanScale(angle)) return false;
+
+            var applicants = new List<IRailwayTemplate>();
+
+            for (var element = _head; element != _tail.Next; element = element.Next)
+            {
+                if (element.Symmetric != null)
+                {
+                    applicants.Add(element);
+                }
+            }
+
+            if (angle != null)
+            {
+                applicants = applicants.Where(_ => Math.Abs((double)angle - _.End.Angle) < Constants.Precision).ToList();
+            }
+
+            // TODO: выбрать блок среди доступных (L1, L2, L3, L4), т.к. L1 может не быть
+
+            var applicant = applicants.FirstOrDefault();
+            if (applicant == null) return false;
+
+            applicant.AppendSymmetric(new Railway(RailwayType.L1));
+
+            return true;
+        }
+
+        #endregion
+
+        #region Implementation of IMutableTemplate
+
+        /// <summary>
+        /// Есть ли возможность применить мутацию к шаблону
+        /// </summary>
+        /// <param name="dimensions">Размеры шаблона, который хотим вставить. Если null - то любой</param>
+        /// <returns></returns>
+        public bool CanMutate(TemplateDimensions dimensions = null)
+        {
+            if (dimensions != null)
+            {
+                // Если размеры предлагаемого шаблона совпадают с размерами текущего, то можно просто заменить шаблон
+                if (dimensions.Output != this.Dimensions.Output) return true;
+
+                // Ищем среди дочерних элементов цепочку, эквивалентную предлагаемому шаблону
+                if (FindSubTemplate(Dimensions.Output) != null) return true;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Применить мутацию
+        /// </summary>
+        /// <param name="template">Шаблон для вставки. Если null - то применить любую мутацию на своё усмотрение</param>
+        public virtual bool TryMutate(IRailwayTemplate template = null)
+        {
+            if (!CanMutate(template?.Dimensions)) return false;
+
+            if (template != null)
+            {
+                var indexes = FindSubTemplate(template.Dimensions.Output);
+                if (indexes == null) return false;
+                var (start, end) = indexes.Value;
+
+                // Присоединяем новый шаблон
+                start.Prev.Next = template;
+                end.Next.Prev = template;
+
+                // Разрываем связи симметрии
+                for (var i = start; i != end.Next; i = i.Next)
+                {
+                    i.Symmetric = null;
+                }
+
+                return true;
+            }
+
+            return false;
+
+            // TODO: сделать случайную мутацию
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Поиск под-шаблона среди дочерних элементов, подходящего под указанную точку выхода
+        /// </summary>
+        /// <param name="templateOutput">Точка выхода из шаблона, из расчёта, что шаблон присоединяется к точке (0,0,↑)</param>
+        /// <returns>начало и окончание цепочки или null, если не не удалось найти</returns>
+        internal (IRailwayTemplate start, IRailwayTemplate end)? FindSubTemplate(Point templateOutput)
+        {
+            for (var i = _head; i != _tail.Next; i = i.Next)
+            {
+                for (var j = i; j != _tail.Next; j = j.Next)
+                {
+                    var start = i.Start;
+                    var end = j.End;
+                    var angle = start.Angle;
+
+                    start = MathFunctions.RotateCoordinates(angle, start);
+                    end = MathFunctions.RotateCoordinates(angle, end);
+
+                    var output = new Point(end.X - start.X, end.Y - start.Y, end.Angle - start.Angle);
+
+                    if (output == templateOutput)
+                    {
+                        return (i, j);
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }

@@ -20,14 +20,7 @@ namespace LilaAppTests
         {
             var head = RailwayTemplates.CreateCircle(RailwayType.T4R);
 
-            var list = new List<Railway>();
-
-            for (var item = head.Next; !item.IsHead(); item = item.Next)
-            {
-                list.Add((Railway)item);
-            }
-
-            var template = new RailwayChain(list.ToArray());
+            var template = head as RailwayChain;
 
             var dimensions = template.Dimensions;
 

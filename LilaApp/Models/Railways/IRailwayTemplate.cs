@@ -8,7 +8,7 @@ namespace LilaApp.Models.Railways
     /// Каждый шаблон является элементом двусвязного списка:
     /// содержит ссылку на предыдущий и следующий элемент
     /// </summary>
-    public interface IRailwayTemplate
+    public interface IRailwayTemplate : IScalableTemplate, IMutableTemplate
     {
         /// <summary>
         /// Следующий шаблон железной дороги
