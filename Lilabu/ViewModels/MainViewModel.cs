@@ -43,6 +43,8 @@ namespace Lilabu.ViewModels
         /// </summary>
         private readonly IFinalTaskSolver[] _solvers;
 
+        private string _selectedSolver;
+
         /// <summary>
         /// Названия алгоритмов решения задачи
         /// </summary>
@@ -51,12 +53,26 @@ namespace Lilabu.ViewModels
         /// <summary>
         /// Выбранный алгоритм решения задачи
         /// </summary>
-        public string SelectedSolver { get; set; }
+        public string SelectedSolver
+        {
+            get => _selectedSolver;
+            set
+            {
+                _selectedSolver = value;
+                Configuration.LastSolver = value;
+                Configuration.Save();
+            }
+        }
 
         /// <summary>
         /// Команда запуска решения обратной задачи
         /// </summary>
         public BaseCommand RunCommand { get; }
+
+        /// <summary>
+        /// Конфигурация
+        /// </summary>
+        private MainConfiguration Configuration { get; }
 
         #endregion
 
@@ -123,6 +139,8 @@ namespace Lilabu.ViewModels
         {
             Title = "Lilabu Application";
 
+            Configuration = new MainConfiguration().Load();
+
             _solvers = new IFinalTaskSolver[]
             {
                 new FirstFinalSolver(),
@@ -130,7 +148,7 @@ namespace Lilabu.ViewModels
                 new ThirdFinalSolver(),
             };
 
-            SelectedSolver = _solvers[1].GetType().Name;
+            SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;
 
             RunCommand = new BaseCommand(() =>
             {
@@ -172,5 +190,27 @@ namespace Lilabu.ViewModels
 
             FileLoaderVm.OpenLastFile();
         }
+    }
+
+    [Serializable]
+    public class MainConfiguration : IConfiguration
+    {
+        #region Properties
+
+        /// <summary>
+        /// Последний используемый алгоритм
+        /// </summary>
+        public string LastSolver { get; set; }
+
+        #endregion
+
+        #region Implementation of IConfiguration
+
+        /// <summary>
+        /// Название файла конфигурации
+        /// </summary>
+        public string FileName => "last_solver.xml";
+
+        #endregion
     }
 }
