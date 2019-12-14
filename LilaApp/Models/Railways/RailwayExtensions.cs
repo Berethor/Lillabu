@@ -20,7 +20,6 @@ namespace LilaApp.Models.Railways
 
             first.Next = second;
             second.Prev = first;
-            second.Start = first.End;
 
             // Если у существующего шаблона было продолжение,
             // то присоединяем его к присоединяемому шаблону
@@ -28,7 +27,10 @@ namespace LilaApp.Models.Railways
             if (next != null && next != second)
             {
                 second.Next = next;
+                second.Next.Prev = second;
             }
+
+            second.Start = first.End;
 
             return second;
         }
@@ -68,6 +70,19 @@ namespace LilaApp.Models.Railways
         }
 
         /// <summary>
+        /// Вызвать изменение размера
+        /// в указанном или любом направлении
+        /// </summary>
+        /// <param name="item">Шаблон масштабирования</param>
+        /// <param name="direction">Направление</param>
+        /// <param name="template">Шаблон для вставки. Если null - то вставить любой блок</param>
+        /// <returns>True - если получилось, иначе - false</returns>
+        public static bool TryScale(this IRailwayTemplate item, Direction direction, IRailwayTemplate template = null)
+        {
+            return item.TryScale(direction.ToAngle(), template);
+        }
+
+        /// <summary>
         /// Преобразовать двусвязный список шаблонов железной дороги в модель по ТЗ
         /// </summary>
         /// <param name="head">Указатель на начало списка</param>
@@ -80,8 +95,7 @@ namespace LilaApp.Models.Railways
             model.Topology.Clear();
             model.Order.Clear();
 
-            var k = 1;
-            model.Topology.Add(new TopologyItem(0, 1, 1));
+            var k = 0;
             var template = head;
             do
             {
@@ -93,21 +107,28 @@ namespace LilaApp.Models.Railways
 
                     if (railway.Type == RailwayType.L0)
                     {
-                        k--;
                         continue;
                     }
 
-                    var source = k + i;
-                    var destination = railway.Next.IsHead() ? 0 : k + i + 1;
+                    var source = k + i - 1;
+                    var destination = source + 1;
 
                     // Добавляем каждый блок в модель
                     model.Order.Add(railway.Name);
+
                     var topology = new TopologyItem(source, destination, railway.Direction);
                     model.Topology.Add(topology);
                 }
 
                 template = template.Next;
                 k += railways.Count;
+
+                if (template == null)
+                {
+                    var topology = new TopologyItem(k - 1, k, railways.Last().Direction);
+                    model.Topology.Add(topology);
+                }
+
             }
             while (template != null);
 
@@ -116,4 +137,5 @@ namespace LilaApp.Models.Railways
             return model;
         }
     }
+
 }

@@ -122,7 +122,23 @@ namespace LilaApp.Algorithm
                 }
             }
 
-            return new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
+            var chain = new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
+
+            // Создаём автоматические связи симметрии
+            // TODO переделать
+            var directions = chain.GetDirections();
+            if (directions.ContainsKey(Direction.N) && directions.ContainsKey(Direction.S))
+            {
+                foreach (var block in directions[Direction.N])
+                    block.Symmetric = directions[Direction.S].First();
+            }
+            if (directions.ContainsKey(Direction.W) && directions.ContainsKey(Direction.E))
+            {
+                foreach (var block in directions[Direction.W])
+                    block.Symmetric = directions[Direction.E].First();
+            }
+
+            return chain;
         }
     }
 }

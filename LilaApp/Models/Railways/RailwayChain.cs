@@ -212,7 +212,9 @@ namespace LilaApp.Models.Railways
         /// в указанном или любом направлении
         /// </summary>
         /// <param name="angle">Направление, если null - то любое</param>
-        public bool TryScale(double? angle = null)
+        /// <param name="template">Шаблон для вставки. Если null - то вставить любой блок</param>
+        /// <returns>True - если получилось, иначе - false</returns>
+        public bool TryScale(double? angle = null, IRailwayTemplate template = null)
         {
             if (!CanScale(angle)) return false;
 
@@ -236,7 +238,7 @@ namespace LilaApp.Models.Railways
             var applicant = applicants.FirstOrDefault();
             if (applicant == null) return false;
 
-            applicant.AppendSymmetric(new Railway(RailwayType.L1));
+            applicant.AppendSymmetric(template ?? Railway.L1);
 
             return true;
         }
@@ -282,11 +284,37 @@ namespace LilaApp.Models.Railways
 
                 // Присоединяем новый шаблон
                 start.Prev.Next = template;
-                end.Next.Prev = template;
+                template.Prev = start.Prev;
 
-                // Разрываем связи симметрии
+                end.Next.Prev = template;
+                template.Next = end.Next;
+
+                template.Start = start.Start;
+
+                // Записываем в словарь направления всех точек стыка нового шаблона
+                var directions = (template is RailwayChain chain) ? chain.GetDirections() : null;
+
+                // Заменяем связи симметрии
                 for (var i = start; i != end.Next; i = i.Next)
                 {
+                    var symmetric = i.Symmetric;
+                    
+                    if (symmetric == null) continue;
+
+                    if (DirectionExtensions.FromAngle(i.End.Angle) is Direction dir)
+                    {
+                        if (directions?.ContainsKey(dir) == true && directions[dir].Count > 0)
+                        {
+                            var fromTemplate = directions[dir].First();
+
+                            symmetric.Symmetric = fromTemplate;
+                            fromTemplate.Symmetric = symmetric;
+
+                            continue;
+                        }
+                    }
+
+                    symmetric.Symmetric = null;
                     i.Symmetric = null;
                 }
 
@@ -307,27 +335,64 @@ namespace LilaApp.Models.Railways
         /// <returns>начало и окончание цепочки или null, если не не удалось найти</returns>
         internal (IRailwayTemplate start, IRailwayTemplate end)? FindSubTemplate(Point templateOutput)
         {
+            var applicants = new List<(int length, IRailwayTemplate start, IRailwayTemplate end)>();
+
             for (var i = _head; i != _tail.Next; i = i.Next)
             {
+                var length = 0;
+                var start = i.Start;
+                var angle = start.Angle;
+                start = MathFunctions.RotateCoordinates(angle, start);
+
                 for (var j = i; j != _tail.Next; j = j.Next)
                 {
-                    var start = i.Start;
+                    length++;
                     var end = j.End;
-                    var angle = start.Angle;
-
-                    start = MathFunctions.RotateCoordinates(angle, start);
                     end = MathFunctions.RotateCoordinates(angle, end);
 
                     var output = new Point(end.X - start.X, end.Y - start.Y, end.Angle - start.Angle);
 
                     if (output == templateOutput)
                     {
-                        return (i, j);
+                        applicants.Add((length, i, j));
                     }
                 }
             }
 
-            return null;
+            if (applicants.Count == 0) return null;
+
+            var min = 0;
+
+            for (var i = 0; i < applicants.Count; i++)
+            {
+                if (applicants[i].length < applicants[min].length)
+                {
+                    min = i;
+                }
+            }
+
+            return (applicants[min].start, applicants[min].end);
+
+        }
+
+        /// <summary>
+        /// Получить список направлений всех точек стыка
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<Direction, List<IRailwayTemplate>> GetDirections()
+        {
+            var directions = new Dictionary<Direction, List<IRailwayTemplate>>();
+
+            for (var i = _head; i != _tail.Next; i = i.Next)
+            {
+                if (!(DirectionExtensions.FromAngle(i.End.Angle) is Direction dir)) continue;
+
+                if (!directions.ContainsKey(dir)) directions[dir] = new List<IRailwayTemplate>();
+
+                directions[dir].Add(i);
+            }
+
+            return directions;
         }
     }
 }

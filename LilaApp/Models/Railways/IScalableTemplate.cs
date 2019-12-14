@@ -21,8 +21,9 @@
         /// в указанном или любом направлении
         /// </summary>
         /// <param name="angle">Направление, если null - то любое</param>
+        /// <param name="template">Шаблон для вставки. Если null - то вставить любой блок</param>
         /// <returns>True - если получилось, иначе - false</returns>
-        bool TryScale(double? angle);
+        bool TryScale(double? angle = null, IRailwayTemplate template = null);
     }
 
     /// <summary>

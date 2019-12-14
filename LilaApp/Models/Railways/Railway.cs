@@ -10,7 +10,7 @@ namespace LilaApp.Models.Railways
     /// Блок рельсов. Атомарная единица железной дороги.
     /// Блок рельсов реализует интерфейс шаблона железной дороги
     /// </summary>
-    [DebuggerDisplay("{Name} [{Start} → {End}]")]
+    [DebuggerDisplay("{Type} [{Start} → {End}]")]
     public class Railway : IRailwayTemplate
     {
         #region Fields
@@ -39,6 +39,11 @@ namespace LilaApp.Models.Railways
             set {
                 _start = value;
                 End = CalculateEndPoint();
+                
+                if (Next != null)
+                {
+                    Next.Start = End;
+                }
             }
         }
 
@@ -220,14 +225,16 @@ namespace LilaApp.Models.Railways
         /// в указанном или любом направлении
         /// </summary>
         /// <param name="angle">Направление, если null - то любое</param>
-        public bool TryScale(double? angle = null)
+        /// <param name="template">Шаблон для вставки. Если null - то вставить любой блок</param>
+        /// <returns>True - если получилось, иначе - false</returns>
+        public bool TryScale(double? angle = null, IRailwayTemplate template = null)
         {
             if (!CanScale(angle)) return false;
 
             // TODO: выбрать блок среди доступных (L1, L2, L3, L4), т.к. L1 может не быть
 
             // Добавляем прямой блок 
-            this.AppendSymmetric(new Railway(RailwayType.L1));
+            this.AppendSymmetric(template ?? L1);
 
             return true;
         }
