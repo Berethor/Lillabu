@@ -147,6 +147,7 @@ namespace LilaApp.Models.Railways
         public static Railway T4L => new Railway(RailwayType.T4L);
         public static Railway T8R => new Railway(RailwayType.T8R);
         public static Railway T8L => new Railway(RailwayType.T8L);
+        public static Railway B1 => new Railway(RailwayType.B1);
 
         #endregion
 
