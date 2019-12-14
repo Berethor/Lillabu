@@ -9,6 +9,15 @@
         Title="{Binding Path=Title}" 
         Height="600" Width="800"
         mc:Ignorable="d">
+    <Window.InputBindings>
+        <KeyBinding Key="W" Command="{Binding Path=Joystick.Up}" />
+        <KeyBinding Modifiers="Shift" Key="W" Command="{Binding Path=Joystick.SmallUp}" />
+        <KeyBinding Key="S" Command="{Binding Path=Joystick.Down}" />
+        <KeyBinding Key="A" Command="{Binding Path=Joystick.Left}" />
+        <KeyBinding Key="D" Command="{Binding Path=Joystick.Right}" />
+        <KeyBinding Key="E" Command="{Binding Path=Joystick.Next}" />
+        <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
+    </Window.InputBindings>
     <Grid Margin="5 5 5 0">
         <Grid.Resources>
             <Style TargetType="GroupBox">

@@ -58,10 +58,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="WasdFinalSolver.cs" />
     <Compile Include="ViewModels\ABaseViewModel.cs" />
     <Compile Include="ViewModels\BaseCommand.cs" />
     <Compile Include="ViewModels\FileLoaderViewModel.cs" />
     <Compile Include="ViewModels\GeneratorViewModel.cs" />
+    <Compile Include="ViewModels\JoystickViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\TraceMapViewModel.cs" />
     <Compile Include="Views\FileGenerator.xaml.cs">
