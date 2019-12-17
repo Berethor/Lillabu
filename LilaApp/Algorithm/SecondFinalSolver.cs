@@ -44,8 +44,12 @@ namespace LilaApp.Algorithm
 
         private List<string> _newOrder;
         private List<TopologyItem> _newTopology;
-
+        private int _turn;
         private static double traceLengthForTurn = Constants.RADIUS * 4;
+
+        private (string side, int length) _previousExpand;
+        private Point _previousPoint;
+        private Point _previousDetail;
 
         private void Run()
         {
@@ -61,11 +65,10 @@ namespace LilaApp.Algorithm
 
             var sides = new List<RouteSide>();
 
-            var turn = HelperActions.GetRichestSide(points);
-            turn = 1;
+            _turn = HelperActions.GetRichestSide(points);
 
             HelperActions.InitialRouteBuilder(order,
-                topology, turn, blocks);
+                topology, _turn, blocks);
 
             _answer.Order = order;
             _answer.Topology = topology;
@@ -75,6 +78,7 @@ namespace LilaApp.Algorithm
 
             var trace = TraceBuilder.CalculateTrace(_answer);
             traceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+            trace.Points = trace.Points.Take(trace.Points.Length - 2).ToArray();
 
             oldOrder = order.GetRange(0, order.Count);
             oldTopology = topology.GetRange(0, topology.Count);
@@ -94,8 +98,8 @@ namespace LilaApp.Algorithm
 
             sides[1].actions.Add(("Up", sides[0], false));
             sides[1].actions.Add(("Down", sides[4], false));
-            sides[1].actions.Add(("Right", sides[3], Convert.ToBoolean(turn + 1)));
-            sides[1].actions.Add(("Left", sides[3], !Convert.ToBoolean(turn + 1)));
+            sides[1].actions.Add(("Right", sides[3], Convert.ToBoolean(_turn + 1)));
+            sides[1].actions.Add(("Left", sides[3], !Convert.ToBoolean(_turn + 1)));
             sides[1].details.Add(trace.Points[2]);
             sides[1].details.Add(trace.Points[3]);
 
@@ -108,8 +112,8 @@ namespace LilaApp.Algorithm
 
             sides[3].actions.Add(("Up", sides[0], false));
             sides[3].actions.Add(("Down", sides[4], false));
-            sides[3].actions.Add(("Right", sides[1], true));
-            sides[3].actions.Add(("Left", sides[1], true));
+            sides[3].actions.Add(("Right", sides[1], Convert.ToBoolean(_turn + 1)));
+            sides[3].actions.Add(("Left", sides[1], !Convert.ToBoolean(_turn + 1)));
             sides[3].details.Add(trace.Points[6]);
             sides[3].details.Add(trace.Points[7]);
 
@@ -119,23 +123,205 @@ namespace LilaApp.Algorithm
             sides[4].actions.Add(("Left", sides[3], false));
             sides[4].details.Add(trace.Points[0]);
 
-            int index = 0;
-            if (blocks.Find(a => a.Name.StartsWith("B")).Count > 0)
+            _answer.Order = order;
+            _answer.Topology = topology;
+
+            _newOrder = new List<string>(order);
+            _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
+
+            double minLength = double.MaxValue;
+            double minRouteLength = double.MaxValue;
+            var detail = new Point(0, 0);
+            var nextPoint = new Point(0, 0);
+            var plannedPoint = new Point(0, 0);
+
+            var pointsCopy = points;
+
+            var circleCentre = new Point(_turn * Constants.RADIUS, 0);
+            pointsCopy = pointsCopy.Where(a =>
+            {
+                if (MathFunctions.GetDistanceToPoint(circleCentre, a) < Constants.RADIUS)
+                {
+                    return false;
+                }
+
+                return true;
+            }).ToList();
+
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    minRouteLength = double.MaxValue;
+
+                    foreach (var waypoint in pointsCopy)
+                    {
+                        double length = 0;
+                        minLength = double.MaxValue;
+
+                        foreach (var detailPoint in trace.Points)
+                        {
+                            length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
+
+                            if (length < minLength)
+                            {
+                                minLength = length;
+                                plannedPoint = detailPoint;
+                            }
+                        }
+
+                        if (minLength < 0.5)
+                        {
+                            pointsCopy = pointsCopy.Where(a => !a.Equals(waypoint)).ToList();
+                            continue;
+                        }
+
+                        if (minLength < minRouteLength)
+                        {
+                            minRouteLength = minLength;
+                            detail = plannedPoint;
+                            nextPoint = waypoint;
+                        }
+                    }
+
+                    if (pointsCopy.Count == 0)
+                    {
+                        break;
+                    }
+
+                    (string side, int length) expand = GetExpandData(ref detail, nextPoint);
+
+                    if(expand.side == _previousExpand.side &&
+                       expand.length == _previousExpand.length &&
+                       detail.Equals(_previousDetail) && nextPoint.Equals(_previousPoint)) 
+                    {
+                        pointsCopy = pointsCopy.Where(a => !a.Equals(_previousPoint)).ToList();
+                        _answer.Order = _newOrder;
+                        _answer.Topology = _newTopology;
+                        OnStepEvent.Invoke(this, _answer);
+                        continue;
+                    }
+
+                    bool TryAddToSide(RouteSide secondSide, string detailName)
+                    {
+                        foreach (var action in secondSide.actions
+                            .Where(action => action.command == expand.side && action.action)
+                            .Select(action => action))
+                        {
+                            AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
+                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                    
+                    for (int i = 0; i < sides.Count; i++)
+                    {
+                        if (IsDetailBelongsToSide(sides, detail, i))
+                        {
+                            var directBlocks = blocks.FindAll(a => a.Name.StartsWith("L"));
+
+                            string detailName = GetDetail(expand, directBlocks);
+                            var currentSide = sides[i];
+                            int tries = 0;
+                            while (true)
+                            {
+                                if(tries > 100)
+                                {
+                                    trace = addReverse(blocks, order, topology, sides, _turn, trace, sides[i].EndIndex, ref pointsCopy);
+                                    break;
+                                }
+
+                                var nextSide = currentSide.actions
+                                                        .Where(a => a.command == expand.side)
+                                                        .Select(a => a).First().Item2;
+
+                                if (!TryAddToSide(currentSide, detailName))
+                                {
+                                    currentSide = nextSide;
+                                    tries++;
+                                    continue;
+                                }
+                                else
+                                {
+                                    TryAddToSide(nextSide, detailName);
+                                    break;
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+
+                    _answer.Order = order;
+                    _answer.Topology = topology;
+                    OnStepEvent.Invoke(this, _answer);
+
+                    trace = TraceBuilder.CalculateTrace(_answer);
+                    trace.Points = trace.Points.Take(trace.Points.Length - 2).ToArray();
+
+                    var newTraceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+
+                    _previousExpand = expand;
+                    _previousPoint = nextPoint;
+                    _previousDetail = detail;
+
+                    if (traceIncome < newTraceIncome)
+                    {
+                        traceIncome = newTraceIncome;
+                        _newOrder = new List<string>(order);
+                        _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
+                        continue;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            _answer.Order = _newOrder;
+            _answer.Topology = _newTopology;
+
+            OnStepEvent.Invoke(this, _answer);
+        }
+
+        /// <summary>
+        /// Функция для добавления разворотного шаблона вместо поворотного
+        /// </summary>
+        /// <param name="blocks">Список доступных блоков</param>
+        /// <param name="order">Порядок блоков</param>
+        /// <param name="topology">Топология</param>
+        /// <param name="sides">Стороны Дороги</param>
+        /// <param name="turn">Направление шаблона 1 - вправо -1 влево</param>
+        /// <param name="trace">Текущая траса</param>
+        /// <param name="index">Номер блока в ордере для вставки шаблона</param>
+        /// <returns></returns>
+        private TraceBuilder.Result addReverse(
+            List<Block> blocks, List<string> order,
+            List<TopologyItem> topology, List<RouteSide> sides,
+            int turn, TraceBuilder.Result trace, int index,
+            ref List<Point> pointsCopy)
+        {
+            if (blocks.Find(_ => _.Name.StartsWith("B")).Count > 0)
             {
                 var angle = trace.Points[index].Angle;
 
                 var sideIndex = sides.FindIndex(a =>
-                           Math.Abs(a.EndIndex - index) == Math.Abs(a.StartIndex - index));
+                           a.StartIndex - index == 0 || a.EndIndex - index == 0);
 
-                for(int i = sideIndex; i >= 0; i--)
+                for (int i = 0; i < sides.Count; i++)
                 {
-                    sides[sideIndex].SideEndIndex += 4;
+                    sides[i].SideEndIndex += 4;
                 }
 
-                order.Remove(order[index]);
-                order.Remove(order[index]);
-                topology.Remove(topology[index]);
-                topology.Remove(topology[index]);
+                order.RemoveAt(index);
+                order.RemoveAt(index);
+                topology.RemoveAt(index);
+                topology.RemoveAt(index);
+
 
                 for (int i = index; i < topology.Count - 1; i++)
                 {
@@ -144,6 +330,11 @@ namespace LilaApp.Algorithm
                 }
 
                 topology[topology.Count - 1].FirstBlock -= 2;
+
+                _answer.Order = order;
+                _answer.Topology = topology;
+
+                OnStepEvent.Invoke(this, _answer);
 
                 order.InsertRange(index, new string[]
                 {
@@ -189,65 +380,268 @@ namespace LilaApp.Algorithm
 
                 OnStepEvent.Invoke(this, _answer);
                 trace = TraceBuilder.CalculateTrace(_answer);
+                trace.Points = trace.Points.Take(trace.Points.Length - 2).ToArray();
 
                 var pSidesCount = sides.Count;
 
-                sides.Add(new RouteSide(
+                var insertIndex = sideIndex + 1;
+                sides.Insert(insertIndex, new RouteSide(
                     trace.Points[index + 1],
                     trace.Points[index + 2],
-                    index + 1, index + 2, pSidesCount + 4));
+                    index + 1, index + 2, pSidesCount + 3));
 
-                sides[sides.Count - 1].details.Add(trace.Points[index + 1]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 2]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 3]);
+                sides[insertIndex].details.Add(trace.Points[index + 1]);
+                sides[insertIndex].details.Add(trace.Points[index + 2]);
+                sides[insertIndex].details.Add(trace.Points[index + 3]);
 
-                sides.Add(new RouteSide(
+                insertIndex++;
+
+                sides.Insert(insertIndex, new RouteSide(
                     trace.Points[index + 4],
-                    index + 4, pSidesCount + 4));
+                    index + 4, pSidesCount + 3));
 
-                sides[sides.Count - 1].details.Add(trace.Points[index + 4]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 5]);
+                sides[insertIndex].details.Add(trace.Points[index + 4]);
+                sides[insertIndex].details.Add(trace.Points[index + 5]);
 
-                sides.Add(new RouteSide(
+                insertIndex++;
+
+                sides.Insert(insertIndex, new RouteSide(
                     trace.Points[index + 6],
-                    index + 6, pSidesCount + 4));
+                    index + 6, pSidesCount + 3));
 
-                sides[sides.Count - 1].details.Add(trace.Points[index + 6]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 7]);
+                sides[insertIndex].details.Add(trace.Points[index + 6]);
+                sides[insertIndex].details.Add(trace.Points[index + 7]);
 
-                sides.Add(new RouteSide(
+                insertIndex++;
+
+                sides.Insert(insertIndex, new RouteSide(
                     trace.Points[index + 8],
                     trace.Points[index + 10],
-                    index + 8, index + 10, pSidesCount + 4));
+                    index + 8, index + 10, pSidesCount + 3));
 
-                sides[sides.Count - 1].details.Add(trace.Points[index + 8]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 9]);
-                sides[sides.Count - 1].details.Add(trace.Points[index + 10]);
+                sides[insertIndex].details.Add(trace.Points[index + 8]);
+                sides[insertIndex].details.Add(trace.Points[index + 9]);
+                sides[insertIndex].details.Add(trace.Points[index + 10]);
 
-                if (angle == 0)
+                if (_turn == 1)
                 {
-                    sides[pSidesCount].actions.Add(("Up", sides[pSidesCount + 2], true));
-                    sides[pSidesCount].actions.Add(("Down", sides[2], false));
-                    sides[pSidesCount].actions.Add(("Right", sides[1], false));
-                    sides[pSidesCount].actions.Add(("Left", sides[pSidesCount + 1], false));
+                    switch (angle)
+                    {
+                        // вверх влево
+                        case (0):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 1], false));
 
-                    sides[pSidesCount + 1].actions.Add(("Up", sides[pSidesCount + 2], false));
-                    sides[pSidesCount + 1].actions.Add(("Down", sides[2], false));
-                    sides[pSidesCount + 1].actions.Add(("Right", sides[1], false));
-                    sides[pSidesCount + 1].actions.Add(("Left", sides[pSidesCount + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 2], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex + 3], true));
 
-                    sides[pSidesCount + 2].actions.Add(("Up", sides[pSidesCount], true));
-                    sides[pSidesCount + 2].actions.Add(("Down", sides[2], false));
-                    sides[pSidesCount + 2].actions.Add(("Right", sides[1], false));
-                    sides[pSidesCount + 2].actions.Add(("Left", sides[pSidesCount + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex + 1], false));
 
-                    sides[pSidesCount + 3].actions.Add(("Up", sides[pSidesCount], false));
-                    sides[pSidesCount + 3].actions.Add(("Down", sides[2], false));
-                    sides[pSidesCount + 3].actions.Add(("Right", sides[1], false));
-                    sides[pSidesCount + 3].actions.Add(("Left", sides[pSidesCount + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 1], true));
+
+                            break;
+                        // влево вниз
+                        case (Math.PI / 2):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], true));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex], true));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], true));
+
+                            break;
+                        // вправо вверх
+                        case (3 * Math.PI / 2):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[sideIndex], true));
+
+                            break;
+                        // вправо вниз
+                        case (Math.PI):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[sideIndex], false));
+
+                            break;
+                    }
                 }
+                else
+                {
+                    switch (angle)
+                    {
+                        // вверх влево
+                        case (0):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Left", sides[sideIndex], false));
 
-                for (int i = 1; i < pSidesCount; i++)
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 2], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[sideIndex], false));
+
+                            break;
+                        // влево вниз
+                        case (Math.PI / 2):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], true));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex], true));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], true));
+
+                            break;
+                        // вправо вверх
+                        case (3 * Math.PI / 2):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[sideIndex], true));
+
+                            break;
+                        // вправо вниз
+                        case (Math.PI):
+                            insertIndex = sideIndex + 1;
+                            sides[insertIndex].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[sideIndex], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[sideIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[sideIndex], false));
+
+                            break;
+                    }
+                }
+                var Xcentre = sides[insertIndex].EndPoint.X - (sides[insertIndex].EndPoint.X - sides[insertIndex + 2].EndPoint.X) / 2;
+                var Ycentre = sides[insertIndex].EndPoint.Y - (sides[insertIndex].EndPoint.Y - sides[insertIndex + 2].EndPoint.Y) / 2;
+
+                var circleCentre = new Point(Xcentre, Ycentre);
+
+                pointsCopy = pointsCopy.Where(a =>
+                {
+                    if (MathFunctions.GetDistanceToPoint(circleCentre, a) < Constants.RADIUS)
+                    {
+                        return false;
+                    }
+
+                    return true;
+                }).ToList();
+                for (int i = insertIndex + 4; i < sides.Count; i++)
                 {
                     sides[i].StartIndex += 9;
 
@@ -256,136 +650,7 @@ namespace LilaApp.Algorithm
                 }
             }
 
-            _answer.Order = order;
-            _answer.Topology = topology;
-
-            _newOrder = new List<string>(order);
-            _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
-
-            double minLength = double.MaxValue;
-            double minRouteLength = double.MaxValue;
-            var detail = new Point(0, 0);
-            var nextPoint = new Point(0, 0);
-            var plannedPoint = new Point(0, 0);
-
-            var pointsCopy = points;
-
-            var circleCentre = new Point(turn * Constants.RADIUS, 0);
-            pointsCopy = pointsCopy.Where(a =>
-            {
-                if (MathFunctions.GetDistanceToPoint(circleCentre, a) < Constants.RADIUS)
-                {
-                    return false;
-                }
-
-                return true;
-            }).ToList();
-
-            try
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    minRouteLength = double.MaxValue;
-
-                    foreach (var waypoint in pointsCopy)
-                    {
-                        double length = 0;
-                        minLength = double.MaxValue;
-
-                        foreach (var detailPoint in trace.Points)
-                        {
-                            length = MathFunctions.GetDistanceToPoint(detailPoint, waypoint);
-
-                            if (length < minLength)
-                            {
-                                minLength = length;
-                                plannedPoint = detailPoint;
-                            }
-                        }
-
-                        if (minLength < 0.5)
-                        {
-                            pointsCopy = pointsCopy.Where(a => !a.Equals(waypoint)).ToList();
-                            continue;
-                        }
-
-                        if (minLength < minRouteLength)
-                        {
-                            minRouteLength = minLength;
-                            detail = plannedPoint;
-                            nextPoint = waypoint;
-                        }
-                    }
-
-                    if (pointsCopy.Count == 0)
-                    {
-                        break;
-                    }
-
-                    (string side, int length) expand = GetExpandData(ref detail, nextPoint);
-
-                    void SearchSide(RouteSide secondSide, string detailName)
-                    {
-                        foreach (var action in secondSide.actions
-                            .Where(action => action.command == expand.side)
-                            .Select(action => action))
-                        {
-                            AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
-                            UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
-                        }
-                    }
-
-                    for (int i = 0; i < sides.Count; i++)
-                    {
-                        if (IsDetailBelongsToSide(sides, detail, i))
-                        {
-                            foreach (var action in sides[i].actions
-                                .Where(action => action.command == expand.side)
-                                .Select(action => action))
-                            {
-                                if (action.Item2.actions
-                                    .Where(a => a.command == expand.side && a.action)
-                                    .Count() != 0)
-                                {
-                                    var directBlocks = blocks.FindAll(a => a.Name.StartsWith("L"));
-
-                                    string detailName = GetDetail(expand, directBlocks);
-
-                                    AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
-                                    UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
-                                    SearchSide(action.Item2, detailName);
-                                }
-                            }
-
-                            break;
-                        }
-                    }
-
-                    _answer.Order = order;
-                    _answer.Topology = topology;
-                    OnStepEvent.Invoke(this, _answer);
-
-                    trace = TraceBuilder.CalculateTrace(_answer);
-                    var newTraceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
-
-                    if (traceIncome < newTraceIncome)
-                    {
-                        traceIncome = newTraceIncome;
-                        _newOrder = new List<string>(order);
-                        _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
-                        continue;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            _answer.Order = _newOrder;
-            _answer.Topology = _newTopology;
-
-            OnStepEvent.Invoke(this, _answer);
+            return trace;
         }
 
         private static bool IsDetailBelongsToSide(List<RouteSide> sides, Point detail, int i)
@@ -393,7 +658,11 @@ namespace LilaApp.Algorithm
             foreach (var d in sides[i].details)
             {
                 if (detail.Equals(d))
+                {
+                    if (i == 0 && detail.X < 0 && detail.Y < 0)
+                        return false;
                     return true;
+                }
             }
             return false;
         }
@@ -401,7 +670,7 @@ namespace LilaApp.Algorithm
         private static string GetDetail((string side, int length) expand, List<Block> directBlocks)
         {
             var lastBlock = directBlocks.Count() - 1;
-            
+
             string detailName = directBlocks[lastBlock].Name;
 
             int minLength = int.Parse(directBlocks[lastBlock].Name[1].ToString());
@@ -453,7 +722,7 @@ namespace LilaApp.Algorithm
             var block = blocks.Find(a => a.Name == name);
             block.Count -= 1;
 
-            if(block.Count == 0)
+            if (block.Count == 0)
             {
                 blocks.Remove(block);
             }
@@ -478,7 +747,7 @@ namespace LilaApp.Algorithm
         {
             var maxValue = endIndex + 1;
 
-            if(maxValue > sides.Count)
+            if (maxValue > sides.Count)
             {
                 maxValue = sides.Count;
             }
@@ -487,7 +756,7 @@ namespace LilaApp.Algorithm
             {
                 if (j != 0)
                     sides[j].StartIndex++;
-                if (j != 4)
+                if (j != maxValue)
                     sides[j].EndIndex++;
                 sides[j].StartPoint.X += pointShift.X;
                 sides[j].StartPoint.Y += pointShift.Y;
