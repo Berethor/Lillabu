@@ -7,32 +7,38 @@ namespace LilaApp.Algorithm
 
     public class DirectTaskSolver : IDirectTaskSolver
     {
-        public static double GetRoutePrice(Model taskModel, Point[] detailsPoints)
+        public static double GetRouteIncome(Model taskModel, Point[] detailsPoints)
         {
-            var routePrice = 0.0;
+            var routeIncome = 0.0;
 
-            foreach (var waypoint in taskModel?.Points)
+            if (taskModel == null) return routeIncome;
+
+            foreach (var wayPoint in taskModel.Points)
             {
-                var length = detailsPoints.Min(detailPoint => MathFunctions.GetDistanceToPoint(detailPoint, waypoint));
+                var length = detailsPoints.Min(detailPoint => MathFunctions.GetDistanceToPoint(detailPoint, wayPoint));
 
-                var income = MathFunctions.GetWaypointIncome(length, waypoint.Price);
+                var income = MathFunctions.GetWaypointIncome(length, wayPoint.Price);
 
-                routePrice += income;
+                routeIncome += income;
             }
 
-            return Math.Round(routePrice, 10);
+            return Math.Round(routeIncome, 10);
         }
 
         #region Implementation of IDirectTaskSolver
 
-        /// <inheritdoc />
-        public double Solve(Model model)
+        /// <summary>
+        /// Решить прямую задачу
+        /// </summary>
+        /// <param name="model">Полная модель</param>
+        /// <returns>Прибыль с точек, цена блоков маршрута, результат = прибыль - цена блоков</returns>
+        public TracePrice Solve(Model model)
         {
             var trace = TraceBuilder.CalculateTrace(model);
 
-            var prcie = GetRoutePrice(model, trace.Points);
+            var income = GetRouteIncome(model, trace.Points);
 
-            return prcie;
+            return new TracePrice(income, trace.Price);
         }
 
         #endregion

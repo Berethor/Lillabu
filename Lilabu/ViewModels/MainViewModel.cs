@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using LilaApp.Algorithm.Genetic;
 
 namespace Lilabu.ViewModels
 {
@@ -70,11 +71,23 @@ namespace Lilabu.ViewModels
         public BaseCommand RunCommand { get; }
 
         /// <summary>
+        /// Запущен ли какой-либо алгоритм
+        /// </summary>
+        public bool IsRunning => _cts != null;
+
+        /// <summary>
+        /// Текст кнопки запуска / остановки
+        /// </summary>
+        public string RunText { get => Get<string>(); set => Set(value); }
+
+        /// <summary>
         /// Конфигурация
         /// </summary>
         private MainConfiguration Configuration { get; }
 
         public JoystickViewModel Joystick { get; }
+
+        public string InfoText { get => Get<string>(); set => Set(value); }
 
         #endregion
 
@@ -97,42 +110,45 @@ namespace Lilabu.ViewModels
         /// Отрисовать модель и вывести её стоимость
         /// </summary>
         /// <param name="model"></param>
-        private void DisplayModel(Model model)
+        private void DisplayAnswer(FinalAnswer answer)
         {
-            Model = model;
+            Model = answer.Model;
 
-            var trace = TraceBuilder.CalculateTrace(model);
+            var trace = TraceBuilder.CalculateTrace(Model);
             WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
             TraceMapVm.Points = trace.Points;
 
-            var income = DirectTaskSolver.GetRoutePrice(model, trace.Points);
-
-            WriteLine($"Прибыль с точек маршрута: {income}");
-            WriteLine($"Стоимость блоков: {trace.Price}");
-            WriteLine($"Итого: {income - trace.Price}");
+            WriteLine($"Прибыль с точек маршрута: {answer.Price.Income}");
+            WriteLine($"Стоимость блоков: {answer.Price.Price}");
+            WriteLine($"Итого: {answer.Price.Result}");
         }
 
         /// <summary>
         /// Отрисовать модели в UI-потоке
         /// </summary>
         /// <param name="sender"></param>
-        /// <param name="model"></param>
-        public void DisplayModelStep(object sender, Model model)
+        /// <param name="answer"></param>
+        public void DisplayModelStep(object sender, FinalAnswer answer)
         {
-            Application.Current.Dispatcher?.BeginInvoke((Action)(() =>
+
+            Application.Current.Dispatcher?.Invoke((Action)(() =>
             {
                 Output = string.Empty;
-                DisplayModel(model);
+                DisplayAnswer(answer);
 
-                FileLoaderVm.InputText = model.Serialize();
+                FileLoaderVm.InputText = answer.Model.Serialize();
+
             }));
 
             if (sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
             {
                 // Задержка отрисовки для анимации
-                Thread.Sleep(100);
+                Thread.Sleep(10);
             }
         }
+
+
+        private CancellationTokenSource _cts;
 
         /// <summary>
         ///  Конструктор по-умолчанию
@@ -140,6 +156,8 @@ namespace Lilabu.ViewModels
         public MainViewModel()
         {
             Title = "Lilabu Application";
+
+            RunText = "Запустить";
 
             Joystick = new JoystickViewModel();
             
@@ -155,20 +173,46 @@ namespace Lilabu.ViewModels
 
             SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;
 
+            var checker = new DirectTaskSolver();
+
             RunCommand = new BaseCommand(() =>
             {
-                var checker = new DirectTaskSolver();
-
-                var solver = _solvers.First(_ => _.GetType().Name == SelectedSolver);
-
-                solver.OnStepEvent += DisplayModelStep;
-
-                Task.Factory.StartNew(() =>
+                if (!IsRunning)
                 {
-                    var answer = solver.Solve(Model, checker);
-                    
-                    DisplayModelStep(null, answer.Model);
-                });
+                    var solver = _solvers.First(_ => _.GetType().Name == SelectedSolver);
+                    solver.OnStepEvent += DisplayModelStep;
+
+                    _cts = new CancellationTokenSource();
+                    solver.Token = _cts.Token;
+
+                    Task.Factory.StartNew(() =>
+                    {
+                        try
+                        {
+                            var answer = solver.Solve(Model, checker);
+
+                            DisplayModelStep(null, answer);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            solver.OnStepEvent -= DisplayModelStep;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                            throw;
+                        }
+
+                    }, _cts.Token);
+                }
+                else
+                {
+                    _cts.Cancel();
+                    _cts.Dispose();
+                    _cts = null;
+                }
+
+                RunText = IsRunning ? "Остановить" : "Запустить";
             });
 
             FileLoaderVm.InputChanged += (sender, inputContent) =>
@@ -184,7 +228,7 @@ namespace Lilabu.ViewModels
 
                     model.Distances = MathFunctions.GetDistanсeBetweenAllPoints(model.Points);
 
-                    DisplayModel(Model);
+                    DisplayAnswer(new FinalAnswer(Model, new DirectTaskSolver().Solve(Model)));
 
                 }
                 catch (Exception exception)

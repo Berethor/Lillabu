@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using LilaApp.Models;
 
 namespace LilaApp.Algorithm
@@ -25,12 +26,15 @@ namespace LilaApp.Algorithm
             return new FinalAnswer()
             {
                 Model = _answer,
-                Price = 0,
+                Price = _checker.Solve(_answer),
             };
         }
 
         /// <inheritdoc />
-        public event EventHandler<Model> OnStepEvent;
+        public CancellationToken Token { get; set; }
+
+        /// <inheritdoc />
+        public event EventHandler<FinalAnswer> OnStepEvent;
 
         #endregion
 
@@ -105,7 +109,7 @@ namespace LilaApp.Algorithm
 
                 _answer.Order.Add(best.variant.name);
                 _answer.Topology.Add(new TopologyItem(trace.Count - 2, trace.Count - 1, best.variant.direction));
-                OnStepEvent?.Invoke(this, _answer);
+                OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
                 // Если приблизились достаточно близко к целевой точке - идём к следующей
                 if (MathFunctions.GetDistanceToPoint(aim, best.point) < epsilon)

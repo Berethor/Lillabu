@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using LilaApp.Algorithm;
 using LilaApp.Models;
 using Lilabu.ViewModels;
@@ -13,22 +14,30 @@ namespace Lilabu
         /// Решить обратную задачу
         /// </summary>
         /// <param name="model">Неполная модель исходных данных (только блоки DATA и ROUTE)</param>
-        /// <param name="directTaskSolver">Решатель прямой задачи - для вычисления стоимости</param>
+        /// <param name="checker">Решатель прямой задачи - для вычисления стоимости</param>
         /// <returns>Полная модель (включая блоки ORDER и TOP)</returns>
-        public FinalAnswer Solve(Model model, IDirectTaskSolver directTaskSolver)
+        public FinalAnswer Solve(Model model, IDirectTaskSolver checker)
         {
             _answer = Model.Copy(model);
+            _checker = checker;
             _cursor = 0;
 
-            return new FinalAnswer() { Model = _answer, Price = 0 };
+            return new FinalAnswer() { Model = _answer, Price = checker.Solve(_answer) };
         }
+
+        /// <summary>
+        /// Токен отмены задачи
+        /// </summary>
+        public CancellationToken Token { get; set; }
 
         /// <summary>
         /// Событие для отрисовки каждого шага в процессе решения
         /// </summary>
-        public event EventHandler<Model> OnStepEvent;
+        public event EventHandler<FinalAnswer> OnStepEvent;
 
         #endregion
+
+        private IDirectTaskSolver _checker;
 
         public WasdFinalSolver(JoystickViewModel joystick)
         {
@@ -59,7 +68,7 @@ namespace Lilabu
             _cursor = Math.Max(_cursor - 1, 0);
             var copy = Model.Copy(_answer);
             copy.FixTopology();
-            OnStepEvent?.Invoke(this, copy);
+            OnStepEvent?.Invoke(this, new FinalAnswer(copy, _checker.Solve(copy)));
         }
 
         private void AddElement(string type)
@@ -68,8 +77,7 @@ namespace Lilabu
             _cursor = Math.Min(_cursor + 1, _answer.Order.Count);
             var copy = Model.Copy(_answer);
             copy.FixTopology();
-            OnStepEvent?.Invoke(this, copy);
+            OnStepEvent?.Invoke(this, new FinalAnswer(copy, _checker.Solve(copy)));
         }
-
     }
 }

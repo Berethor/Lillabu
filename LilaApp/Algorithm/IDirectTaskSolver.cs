@@ -8,7 +8,7 @@ namespace LilaApp.Algorithm
         /// Решить прямую задачу
         /// </summary>
         /// <param name="model">Полная модель</param>
-        /// <returns>Цена маршрута</returns>
-        double Solve(Model model);
+        /// <returns>Прибыль с точек, цена блоков маршрута, результат = прибыль - цена блоков</returns>
+        TracePrice Solve(Model model);
     }
 }

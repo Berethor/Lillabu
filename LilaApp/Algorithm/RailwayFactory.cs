@@ -12,6 +12,8 @@ namespace LilaApp.Algorithm
     /// </summary>
     public class RailwayFactory
     {
+        public static RailwayFactory Default { get; } = new RailwayFactory();
+
         /// <summary>
         /// Произвести шаблон блоков железной дороги по чертежу
         /// </summary>
@@ -20,6 +22,18 @@ namespace LilaApp.Algorithm
         /// <returns></returns>
         public RailwayChain BuildTemplate(string blueprint, Model model)
         {
+            if (TryBuildTemplate(out var chain, out var error, blueprint, model))
+            {
+                return chain;
+            }
+
+            return null;
+        }
+
+        public bool TryBuildTemplate(out RailwayChain chain, out string error, string blueprint, Model model)
+        {
+            error = null;
+
             var regex = new Regex("((?'type'L|T|t|B)(?'lenght'\\d+))");
 
             var railways = new List<Railway>();
@@ -70,8 +84,9 @@ namespace LilaApp.Algorithm
                                     amount = 1;
                                     break; // T8 = 1 x T8
                                 default:
-                                    throw new ArgumentException(
-                                        $"Некорректная длина блока {type}{length} в шаблоне {blueprint}");
+                                    error = $"Некорректная длина блока {type}{length} в шаблоне {blueprint}";
+                                    chain = null;
+                                    return false;
                             }
 
                             var blocks = model?.Blocks.FirstOrDefault(_ => _.Name == "T4");
@@ -99,7 +114,6 @@ namespace LilaApp.Algorithm
                         }
                     case "B":
                         {
-
                             if (length != 1)
                                 throw new ArgumentException(
                                     $"Некорректная длина блока {type}{length} в шаблоне {blueprint}");
@@ -118,11 +132,13 @@ namespace LilaApp.Algorithm
 
                 if (length != 0)
                 {
-                    throw new InvalidOperationException($"Недостаточно блоков для производства {match.Value} в шаблоне {blueprint}");
+                    error = $"Недостаточно блоков для производства {match.Value} в шаблоне {blueprint}";
+                    chain = null;
+                    return false;
                 }
             }
 
-            var chain = new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
+            chain = new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
 
             // Создаём автоматические связи симметрии
             // TODO переделать
@@ -138,7 +154,7 @@ namespace LilaApp.Algorithm
                     block.Symmetric = directions[Direction.E].First();
             }
 
-            return chain;
+            return true;
         }
     }
 }

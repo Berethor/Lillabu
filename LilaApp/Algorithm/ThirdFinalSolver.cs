@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using LilaApp.Generator;
 
 namespace LilaApp.Algorithm
@@ -18,7 +19,7 @@ namespace LilaApp.Algorithm
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException" />
-        public FinalAnswer Solve(Model model, IDirectTaskSolver directTaskSolver)
+        public FinalAnswer Solve(Model model, IDirectTaskSolver checker)
         {
             _model = model; // ?? throw new ArgumentNullException(nameof(model));
 
@@ -34,7 +35,7 @@ namespace LilaApp.Algorithm
             void DisplayStep(IRailwayTemplate t)
             {
                 _answer = t.ConvertToModel(_model);
-                OnStepEvent?.Invoke(this, _answer);
+                OnStepEvent?.Invoke(this, new FinalAnswer(_answer, checker.Solve(_answer)));
             }
 
             DisplayStep(cycle);
@@ -61,7 +62,7 @@ namespace LilaApp.Algorithm
                 // Up
                 for (var i = 0; i < l; i++)
                 {
-                    if (!chain1.TryScale(Direction.N, Railway.L3)) break;
+                    if (!chain1.TryScale(Direction.E, Railway.L3)) break;
                     DisplayStep(cycle);
                 }
 
@@ -137,12 +138,15 @@ namespace LilaApp.Algorithm
             return new FinalAnswer
             {
                 Model = _answer,
-                Price = directTaskSolver.Solve(_answer),
+                Price = checker.Solve(_answer),
             };
         }
 
         /// <inheritdoc />
-        public event EventHandler<Model> OnStepEvent;
+        public CancellationToken Token { get; set; }
+
+        /// <inheritdoc />
+        public event EventHandler<FinalAnswer> OnStepEvent;
 
         #endregion
 

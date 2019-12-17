@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using LilaApp.Models;
 
 namespace LilaApp.Algorithm
@@ -12,14 +13,19 @@ namespace LilaApp.Algorithm
         /// Решить обратную задачу
         /// </summary>
         /// <param name="model">Неполная модель исходных данных (только блоки DATA и ROUTE)</param>
-        /// <param name="directTaskSolver">Решатель прямой задачи - для вычислеия стоимости</param>
+        /// <param name="directTaskSolver">Алгоритм решения прямой задачи - для вычисления стоимости</param>
         /// <returns>Полная модель (включая блоки ORDER и TOP)</returns>
         FinalAnswer Solve(Model model, IDirectTaskSolver directTaskSolver);
 
         /// <summary>
-        /// Событие для отрисовки каждого шага в процессе решения
+        /// Токен отмены задачи
         /// </summary>
-        event EventHandler<Model> OnStepEvent;
+        CancellationToken Token { get; set; }
+
+        /// <summary>
+        /// Событие для визуализации каждого шага в процессе решения
+        /// </summary>
+        event EventHandler<FinalAnswer> OnStepEvent;
     }
 
 }

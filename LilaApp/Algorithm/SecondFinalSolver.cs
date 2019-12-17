@@ -15,12 +15,7 @@ namespace LilaApp.Algorithm
         /// <inheritdoc />
         public FinalAnswer Solve(Model model, IDirectTaskSolver checker)
         {
-            if (model == null)
-            {
-                throw new ArgumentNullException(nameof(model));
-            }
-
-            _model = model;
+            _model = model ?? throw new ArgumentNullException(nameof(model));
             _checker = checker;
 
             _answer = Model.Copy(_model);
@@ -30,14 +25,14 @@ namespace LilaApp.Algorithm
             return new FinalAnswer()
             {
                 Model = _answer,
-                Price = 0,
+                Price = _checker.Solve(_model),
             };
         }
 
         #endregion
 
-        public event EventHandler<Model> OnStepEvent;
-        public CancellationToken cancellationToken;
+        public event EventHandler<FinalAnswer> OnStepEvent;
+        public CancellationToken Token { get; set; }
 
         private Model _model;
         private Model _answer;
@@ -75,7 +70,7 @@ namespace LilaApp.Algorithm
             _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
 
             var trace = TraceBuilder.CalculateTrace(_answer);
-            traceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+            traceIncome = DirectTaskSolver.GetRouteIncome(_answer, trace.Points);
 
             oldOrder = order.GetRange(0, order.Count);
             oldTopology = topology.GetRange(0, topology.Count);
@@ -188,7 +183,7 @@ namespace LilaApp.Algorithm
                 _answer.Order = order;
                 _answer.Topology = topology;
 
-                OnStepEvent.Invoke(this, _answer);
+                OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
                 trace = TraceBuilder.CalculateTrace(_answer);
 
                 var pSidesCount = sides.Count;
@@ -284,7 +279,7 @@ namespace LilaApp.Algorithm
 
             try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!Token.IsCancellationRequested)
                 {
                     minRouteLength = double.MaxValue;
 
@@ -364,10 +359,10 @@ namespace LilaApp.Algorithm
 
                     _answer.Order = order;
                     _answer.Topology = topology;
-                    OnStepEvent.Invoke(this, _answer);
+                    OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
                     trace = TraceBuilder.CalculateTrace(_answer);
-                    var newTraceIncome = DirectTaskSolver.GetRoutePrice(_answer, trace.Points);
+                    var newTraceIncome = DirectTaskSolver.GetRouteIncome(_answer, trace.Points);
 
                     if (traceIncome < newTraceIncome)
                     {
@@ -387,7 +382,7 @@ namespace LilaApp.Algorithm
             _answer.Order = _newOrder;
             _answer.Topology = _newTopology;
 
-            OnStepEvent.Invoke(this, _answer);
+            OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
         }
 
         private static bool IsDetailBelongsToSide(List<RouteSide> sides, Point detail, int i)
