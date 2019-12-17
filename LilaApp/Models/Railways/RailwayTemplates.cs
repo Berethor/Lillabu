@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using LilaApp.Algorithm;
 
 namespace LilaApp.Models.Railways
 {
@@ -9,8 +10,9 @@ namespace LilaApp.Models.Railways
         ///  Создать стартовую трассу - кольцо
         /// </summary>
         /// <param name="turnDirection">Направление кольца (T4R, T4L, T8R или T8L)</param>
+        /// <param name="model">Модель</param>
         /// <returns>Указатель на начало трассы - блок L0</returns>
-        public static RailwayChain CreateCircle(RailwayType turnDirection)
+        public static RailwayChain CreateCircle(RailwayType turnDirection, Model model = null)
         {
             // Добавляем блок L0
             var head = new Railway(RailwayType.L0) { Start = new Point(0, 0), };
@@ -19,10 +21,21 @@ namespace LilaApp.Models.Railways
 
             var list = new List<IRailwayTemplate>() { head };
 
-            // Добавляем 8 блоков T4
+            var blueprint =
+                turnDirection == RailwayType.T4L ? "t4" :
+                turnDirection == RailwayType.T4R ? "T4" :
+                turnDirection == RailwayType.T8L ? "t8" :
+                turnDirection == RailwayType.T8R ? "T8" : "";
+
+            // Добавляем 8 блоков T4 или 16 T8
             for (var i = 0; i < count; i++)
             {
-                list.Add(new Railway(turnDirection));
+                if (!RailwayFactory.Default.TryBuildTemplate(out var turn, out var error, blueprint, model))
+                {
+                    turn = new RailwayChain(new Railway(turnDirection));
+                }
+
+                list.AddRange(turn.GetRailways());
             }
             var chain = new RailwayChain(list.ToArray());
             //head.Append(chain);
@@ -31,10 +44,29 @@ namespace LilaApp.Models.Railways
             //chain.Next = chain[0];
 
             // Связываем симметричные блоки
-            for (var i = 0; i < count / 2; i++)
+            for (var i = 0; i < list.Count; i++)
             {
-                chain[i].Symmetric = chain[i + count / 2];
-                chain[i + count / 2].Symmetric = chain[i];
+                var block = list[i];
+
+                if (block.Symmetric != null) break;
+
+                if (!(DirectionExtensions.FromAngle(block.End.Angle) is Direction direction)) continue;
+                var sym = direction.GetSymmetric();
+
+                for(var j = i + 1; j < list.Count; j++)
+                {
+                    var other = list[j];
+
+                    if (DirectionExtensions.FromAngle(other.End.Angle) is Direction otherDirection
+                        && otherDirection == sym)
+                    {
+                        other.Symmetric = block;
+                        block.Symmetric = other;
+
+                        break;
+                    }
+
+                }
             }
 
             //head.Symmetric = chain[count / 2 - 1];

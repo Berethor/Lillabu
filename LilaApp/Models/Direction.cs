@@ -61,6 +61,26 @@ namespace LilaApp.Models
             }
         }
 
+        public static Direction GetSymmetric(this Direction direction)
+        {
+            switch (direction)
+            {
+                case Direction.N: return Direction.S;
+                case Direction.S: return Direction.N;
+                case Direction.E: return Direction.W;
+                case Direction.W: return Direction.E;
+
+                case Direction.NE: return Direction.SW;
+                case Direction.NW: return Direction.SE;
+
+                case Direction.SE: return Direction.NW;
+                case Direction.SW: return Direction.NE;
+
+                default:
+                    throw new ArgumentOutOfRangeException($"Для направления {direction} не определен угол");
+            }
+        }
+
         /// <summary>
         /// Преобразовать угол наклона к направлению сторон света
         /// </summary>
