@@ -138,6 +138,11 @@ namespace Lilabu.ViewModels
 
                 FileLoaderVm.InputText = answer.Model.Serialize();
 
+                if (sender is IDrawableContextProvider contextProvider)
+                {
+                    InfoText = contextProvider.Context.BotsRating;
+                }
+
             }));
 
             if (sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
@@ -169,6 +174,7 @@ namespace Lilabu.ViewModels
                 new SecondFinalSolver(), 
                 new ThirdFinalSolver(),
                 new WasdFinalSolver(Joystick), 
+                new GeneticFinalSolver(), 
             };
 
             SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;

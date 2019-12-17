@@ -12,7 +12,7 @@ namespace LilaAppTests
     public class RailwayTemplatesTests
     {
         [TestMethod]
-        public void Test_1_CircleToModel()
+        public void Test_01_CircleToModel()
         {
             var circle = RailwayTemplates.CreateCircle(RailwayType.T4R);
             var model = circle.ConvertToModel();
@@ -28,7 +28,17 @@ namespace LilaAppTests
             Assert.AreEqual(expectedText, text);
         }
 
-    [TestMethod]
+        [TestMethod]
+        public void Test_02_CircleScaleS()
+        {
+            var circle = RailwayTemplates.CreateCircle(RailwayType.T4R);
+            circle.TryScale(Direction.S, Railway.L3);
+            var model = circle.ConvertToModel();
+
+            Assert.AreEqual("T4T4T4T4L3T4T4T4T4L3", string.Join("", model.Order));
+        }
+
+        [TestMethod]
         public void Test_1_SubTemplate_L6T2R()
         {
             var chain = new RailwayChain(Railway.L3, Railway.L3, Railway.T4R, Railway.T4R);

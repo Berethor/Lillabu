@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using LilaApp.Algorithm;
 
@@ -47,13 +48,29 @@ namespace LilaApp.Models.Railways
             for (var i = 0; i < list.Count; i++)
             {
                 var block = list[i];
+                
+                if (!(DirectionExtensions.FromAngle(block.End.Angle) is Direction direction)) continue;
+
+                if (direction == Direction.S)
+                {
+                    //var last = list.Last();
+                    //last.Symmetric = block;
+
+                    // TODO: задаём в качестве симметричного элемента для ↓ саму цепочку,
+                    // чтобы при расширении блоки добавлялись после неё.
+                    // По-хорошему надо добавлять внутрь цепочки в конец, 
+                    // но при этом ломается конвертация в модель,
+                    // т.к. при добавлении а конец цепочки _tail не меняется
+
+                    block.Symmetric = chain;
+                    continue;
+                }
 
                 if (block.Symmetric != null) break;
 
-                if (!(DirectionExtensions.FromAngle(block.End.Angle) is Direction direction)) continue;
                 var sym = direction.GetSymmetric();
 
-                for(var j = i + 1; j < list.Count; j++)
+                for (var j = i + 1; j < list.Count; j++)
                 {
                     var other = list[j];
 

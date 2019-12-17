@@ -31,11 +31,13 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300"/>
             <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <GroupBox Header="Исходные данные:">
+        <GroupBox Header="Исходные данные:" Grid.RowSpan="2">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition />
+                    <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
@@ -48,6 +50,10 @@
                     <ComboBox Margin="0 0 5 0" ItemsSource="{Binding Path=Solvers}" SelectedItem="{Binding Path=SelectedSolver}"/>
                     <Button Grid.Column="1" Content="{Binding Path=RunText}" Command="{Binding Path=RunCommand}" Margin="5 0 0 0" Padding="0 2"/>
                 </Grid>
+
+                <Expander Header="Параметры алгоритма" Margin="5" Grid.Row="3" Visibility="Collapsed">
+                </Expander>
+                
             </Grid>
         </GroupBox>
         <GridSplitter Grid.Column="0" Width="10" Background="White" Margin="0 0 -5 0"/>
@@ -55,9 +61,14 @@
             <views:TraceMap DataContext="{Binding Path=.}" />
         </GroupBox>
 
-        <GridSplitter Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="10" Background="White" Margin="0 0 0 -5"/>
-        <GroupBox Header="Вывод" Grid.Row="1" Grid.ColumnSpan="2">
+        <TextBlock Grid.Column="1" Margin="12" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
+                   Text="{Binding Path=InfoText}" FontFamily="Courier New"/>
+
+        <GridSplitter Grid.Column="1" Grid.ColumnSpan="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="10" Background="White" Margin="0 0 0 -5"/>
+        <GroupBox Header="Вывод" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2">
             <TextBox Margin="5" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Text="{Binding Path=Output}" TextWrapping="Wrap"/>
         </GroupBox>
+
+
     </Grid>
 </Window>
