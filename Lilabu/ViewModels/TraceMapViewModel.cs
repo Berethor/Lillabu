@@ -22,12 +22,19 @@ namespace Lilabu.ViewModels
         /// </summary>
         public Point[] Points { get => Get<Point[]>(); set => Set(value); }
 
-        #endregion
-
         /// <summary>
-        /// Конструктор по умолчанию
+        /// Точка курсора алгоритма WASD
         /// </summary>
-        public TraceMapViewModel()
+        public Point? CursorPoint { get => Get<Point>(); set => Set(value);
+
+        }
+
+    #endregion
+
+    /// <summary>
+    /// Конструктор по умолчанию
+    /// </summary>
+    public TraceMapViewModel()
         {
             Width = 100;
             Height = 100;

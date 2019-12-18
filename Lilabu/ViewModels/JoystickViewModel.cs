@@ -1,15 +1,16 @@
 ﻿using System;
-using System.Windows.Input;
 
 namespace Lilabu.ViewModels
 {
-    public class JoystickViewModel: ABaseViewModel
+    public class JoystickViewModel : ABaseViewModel
     {
         public BaseCommand Up { get; set; }
         public BaseCommand SmallUp { get; set; }
         public BaseCommand Down { get; set; }
         public BaseCommand Left { get; set; }
+        public BaseCommand SmallLeft { get; set; }
         public BaseCommand Right { get; set; }
+        public BaseCommand SmallRight { get; set; }
         public BaseCommand Previous { get; set; }
         public BaseCommand Next { get; set; }
 
@@ -24,7 +25,7 @@ namespace Lilabu.ViewModels
 
             SmallUp = new BaseCommand(() =>
             {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key =  JoystickKey.SmallUp } );
+                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallUp });
             });
 
             Down = new BaseCommand(() =>
@@ -37,9 +38,19 @@ namespace Lilabu.ViewModels
                 OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Left });
             });
 
+            SmallLeft = new BaseCommand(() =>
+            {
+                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallLeft });
+            });
+
             Right = new BaseCommand(() =>
             {
                 OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Right });
+            });
+
+            SmallRight = new BaseCommand(() =>
+            {
+                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallRight });
             });
 
             Previous = new BaseCommand(() =>
@@ -65,7 +76,9 @@ namespace Lilabu.ViewModels
         SmallUp,
         Down,
         Left,
+        SmallLeft,
         Right,
+        SmallRight,
         Previous,
         Next
     }

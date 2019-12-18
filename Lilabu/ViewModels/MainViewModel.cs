@@ -139,14 +139,21 @@ namespace Lilabu.ViewModels
             Application.Current.Dispatcher?.Invoke((Action)(() =>
             {
                 Output = string.Empty;
-                DisplayAnswer(answer);
 
                 FileLoaderVm.InputText = answer.Model.Serialize();
 
                 if (sender is IDrawableContextProvider contextProvider)
                 {
-                    InfoText = contextProvider.Context.BotsRating;
+                    var context = contextProvider.Context;
+
+                    InfoText = context.BotsRating;
+
+                    TraceMapVm.CursorPoint = context.CursorPoint;
+
+                    WriteLine(context.ErrorMessage);
                 }
+
+                DisplayAnswer(answer);
 
             }));
 

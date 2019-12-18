@@ -11,10 +11,12 @@
         mc:Ignorable="d">
     <Window.InputBindings>
         <KeyBinding Key="W" Command="{Binding Path=Joystick.Up}" />
-        <KeyBinding Modifiers="Shift" Key="W" Command="{Binding Path=Joystick.SmallUp}" />
         <KeyBinding Key="S" Command="{Binding Path=Joystick.Down}" />
         <KeyBinding Key="A" Command="{Binding Path=Joystick.Left}" />
         <KeyBinding Key="D" Command="{Binding Path=Joystick.Right}" />
+        <KeyBinding Modifiers="Shift" Key="W" Command="{Binding Path=Joystick.SmallUp}" />
+        <KeyBinding Modifiers="Shift" Key="A" Command="{Binding Path=Joystick.SmallLeft}" />
+        <KeyBinding Modifiers="Shift" Key="D" Command="{Binding Path=Joystick.SmallRight}" />
         <KeyBinding Key="E" Command="{Binding Path=Joystick.Next}" />
         <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
     </Window.InputBindings>
@@ -61,7 +63,7 @@
             <views:TraceMap DataContext="{Binding Path=.}" />
         </GroupBox>
 
-        <TextBlock Grid.Column="1" Margin="12" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
+        <TextBlock Grid.Column="2" Margin="0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
                    Text="{Binding Path=InfoText}" FontFamily="Courier New"/>
 
         <GridSplitter Grid.Column="1" Grid.ColumnSpan="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="10" Background="White" Margin="0 0 0 -5"/>

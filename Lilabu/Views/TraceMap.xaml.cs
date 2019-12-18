@@ -127,6 +127,45 @@ namespace Lilabu.Views
                     });
                 }
 
+                // Отрисовка треугольника
+                void AddTriangle(Point p1, Brush fill, Brush border = null)
+                {
+                    AddEllipse(p1, Brushes.Green);
+                    var x1 = padding + multiplier * (p1.X - minPoint.X);
+                    var y1 = padding + multiplier * (p1.Y - minPoint.Y);
+
+                    const double size = 0.5 * multiplier;
+                    const double xc = size; const double yc = size;
+
+                    var triangle = new []
+                    {
+                        new WinPoint(xc, yc + size),
+                        new WinPoint(xc + size * 0.866, yc - size * 0.5),
+                        new WinPoint(xc - size * 0.866, yc - size * 0.5),
+                    };
+
+                    var dxy = Convert.ToInt32(p1.Degrees) % 90 == 45 ? size / 0.707 : size;
+                    var polygon = new Polygon()
+                    {
+                        Width = 2*size,
+                        Height = 2*size,
+                        Points = new PointCollection(triangle),
+                        Stroke = border ?? fill,
+                        Fill = fill,
+                    };
+                    var polygonGrid = new Grid()
+                    {
+                        Width = 2*size,
+                        Height = 2*size,
+                        Margin = new Thickness(x1 - dxy, y1 - dxy, 0, 0),
+                        LayoutTransform = new RotateTransform(p1.Degrees),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                    };
+                    polygonGrid.Children.Add(polygon);
+                    grid_Map.Children.Add(polygonGrid);
+                }
+
                 // Сетка
                 for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
                     AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
@@ -197,6 +236,12 @@ namespace Lilabu.Views
                         VerticalAlignment = VerticalAlignment.Top,
                     };
                     grid_Map.Children.Add(textBox);
+                }
+
+                // Основной курсор алгоритма WASD
+                if (VM.CursorPoint is Point cursorPoint)
+                {
+                    AddTriangle(cursorPoint, Brushes.Transparent, Brushes.Green);
                 }
             }
         }
