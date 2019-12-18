@@ -107,9 +107,9 @@ namespace Lilabu.ViewModels
         }
 
         /// <summary>
-        /// Отрисовать модель и вывести её стоимость
+        /// Отобразить ответ
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="answer"></param>
         private void DisplayAnswer(FinalAnswer answer)
         {
             Model = answer.Model;
@@ -121,10 +121,15 @@ namespace Lilabu.ViewModels
             WriteLine($"Прибыль с точек маршрута: {answer.Price.Income}");
             WriteLine($"Стоимость блоков: {answer.Price.Price}");
             WriteLine($"Итого: {answer.Price.Result}");
+
+            if (trace.Exceptions.Any())
+            {
+                WriteLine($"Алгоритм {SelectedSolver} выдал некорректное решение. Рекомендуется провести отладку алгоритма");
+            }
         }
 
         /// <summary>
-        /// Отрисовать модели в UI-потоке
+        /// Отобразить ответ в UI-потоке
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="answer"></param>

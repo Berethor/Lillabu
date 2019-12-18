@@ -160,6 +160,9 @@ namespace LilaApp.Models.Railways
                         list.Add(railway);
                         break;
 
+                    case null:
+                        return list;
+
                     default:
                         list.AddRange(element.GetRailways());
                         break;
@@ -286,7 +289,7 @@ namespace LilaApp.Models.Railways
                 start.Prev.Next = template;
                 template.Prev = start.Prev;
 
-                end.Next.Prev = template;
+                if (end.Next != null) end.Next.Prev = template;
                 template.Next = end.Next;
 
                 template.Start = start.Start;
