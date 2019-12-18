@@ -76,11 +76,14 @@ namespace LilaApp.Models
                 Topology = Topology.Clone(),
             };
 
-            var size = Distances.GetLength(0);
-            model.Distances = new double[size][];
-            for (var i = 0; i < size; i++)
+            if (Distances != null)
             {
-                model.Distances[i] = Distances[i].Select(_ => _).ToArray();
+                var size = Distances.GetLength(0);
+                model.Distances = new double[size][];
+                for (var i = 0; i < size; i++)
+                {
+                    model.Distances[i] = Distances[i].Select(_ => _).ToArray();
+                }
             }
 
             return model;
