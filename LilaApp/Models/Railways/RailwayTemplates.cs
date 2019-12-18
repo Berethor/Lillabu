@@ -112,5 +112,15 @@ namespace LilaApp.Models.Railways
                 chain[0] as Railway, /*                                */ chain[4 * m - 1] as Railway,
                 chain[7 * m - 1] as Railway, chain[6 * m - 1] as Railway, chain[5 * m - 1] as Railway);
         }
+
+        public static List<string> Library  = new List<string>()
+        {
+            "t2T1L6",
+            "L6T1t2",
+            "t2T2T2T2t2",
+            "T2t2t2t2T2",
+            "t2T1t2",
+            "T2t1T2",
+        };
     }
 }

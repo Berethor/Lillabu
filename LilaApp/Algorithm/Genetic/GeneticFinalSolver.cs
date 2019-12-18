@@ -214,10 +214,18 @@ namespace LilaApp.Algorithm.Genetic
                     //case 2: bot.Next(); return;
                     //case 3: bot.Enter(); return;
                     //case 4: bot.Exit(); return;
-                    case 5: bot.Scale(Direction.N, l1); return;
-                    case 6: bot.Scale(Direction.S, l1); return;
-                    case 7: bot.Scale(Direction.W, l1); return;
-                    case 8: bot.Scale(Direction.E, l1); return;
+                    case 5: bot.TryScale(Direction.N, l1); return;
+                    case 6: bot.TryScale(Direction.S, l1); return;
+                    case 7: bot.TryScale(Direction.W, l1); return;
+                    case 8: bot.TryScale(Direction.E, l1); return;
+
+                    case 9:
+                        var blueprint = RailwayTemplates.Library[_random.Next(RailwayTemplates.Library.Count)];
+                        if (_factory.TryBuildTemplate(out var template, out error, blueprint, bot.Current.Model))
+                        {
+                            bot.TryMutate(template);
+                        }
+                        break;
 
                     default: bot.Cur = _random.Next(bot.Dna.Length); break;
                 }
@@ -295,45 +303,73 @@ public class Bot
         Pointer = Root;
     }
 
-    public void Prev()
+    public bool Prev()
     {
         if (Pointer.Prev != null)
         {
             Pointer = Pointer.Prev;
+            
+            return true;
         }
+
+        return false;
     }
 
-    public void Next()
+    public bool Next()
     {
         if (Pointer.Next != null)
         {
             Pointer = Pointer.Next;
+            
+            return true;
         }
+
+        return false;
     }
 
-    public void Enter()
+    public bool Enter()
     {
         if (Pointer is RailwayChain chain)
         {
             ParentStack.Push(Pointer);
             Pointer = chain[0];
+            
+            return true;
         }
+
+        return false;
     }
 
-    public void Exit()
+    public bool Exit()
     {
         if (ParentStack.Count > 0)
         {
             Pointer = ParentStack.Pop();
+            
+            return true;
         }
+
+        return false;
     }
 
-    public void Scale(Direction direction, IRailwayTemplate template = null)
+    public bool TryScale(Direction direction, IRailwayTemplate template = null)
     {
         if (Pointer is RailwayChain chain)
         {
-            chain.TryScale(direction, template);
+            return chain.TryScale(direction, template);
         }
+
+        return false;
+    }
+
+    public bool TryMutate(IRailwayTemplate template)
+    {
+        if (Pointer is RailwayChain chain)
+        {
+            return chain.TryMutate(template);
+        }
+
+        return false;
     }
 }
 
