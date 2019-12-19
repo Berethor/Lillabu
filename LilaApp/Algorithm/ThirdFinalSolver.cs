@@ -44,7 +44,7 @@ namespace LilaApp.Algorithm
 
 
             var l = 2;
-            var head = cycle;
+            IRailwayTemplate head = cycle;
             for (var k = 0; k < 2; k++)
             {
                 // Left

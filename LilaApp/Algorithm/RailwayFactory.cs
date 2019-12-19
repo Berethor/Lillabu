@@ -20,7 +20,7 @@ namespace LilaApp.Algorithm
         /// <param name="blueprint">Чертёж, в текстовом виде</param>
         /// <param name="model">Модель данных, для подсчета количества доступных блоков</param>
         /// <returns></returns>
-        public RailwayChain BuildTemplate(string blueprint, Model model)
+        public IRailwayTemplate BuildTemplate(string blueprint, Model model)
         {
             if (TryBuildTemplate(out var chain, out var error, blueprint, model))
             {
@@ -30,8 +30,11 @@ namespace LilaApp.Algorithm
             return null;
         }
 
-        public bool TryBuildTemplate(out RailwayChain chain, out string error, string blueprint, Model model)
+        public bool TryBuildTemplate(out IRailwayTemplate template, out string error, string blueprint, Model model)
         {
+            // Копируем список блоков
+            var blocks = model?.Blocks.Select(block => (Block) block.Clone()).ToList();
+
             error = null;
 
             var regex = new Regex("((?'type'L|T|t|B)(?'lenght'\\d+))");
@@ -49,11 +52,11 @@ namespace LilaApp.Algorithm
                         {
                             for (var k = 4; k > 0; k--)
                             {
-                                var blocks = model?.Blocks.FirstOrDefault(_ => _.Name == $"L{k}");
-                                while (blocks?.Count > 0 && length >= k)
+                                var lineBlocks = blocks?.FirstOrDefault(_ => _.Name == $"L{k}");
+                                while (lineBlocks?.Count > 0 && length >= k)
                                 {
                                     length -= k;
-                                    blocks.Count--;
+                                    lineBlocks.Count--;
                                     var railway =
                                         k == 4 ? Railway.L4 :
                                         k == 3 ? Railway.L3 :
@@ -85,23 +88,23 @@ namespace LilaApp.Algorithm
                                     break; // T8 = 1 x T8
                                 default:
                                     error = $"Некорректная длина блока {type}{length} в шаблоне {blueprint}";
-                                    chain = null;
+                                    template = null;
                                     return false;
                             }
 
-                            var blocks = model?.Blocks.FirstOrDefault(_ => _.Name == "T4");
-                            while (blocks?.Count > 0 && amount > 0)
+                            var turnBlocks = blocks?.FirstOrDefault(_ => _.Name == "T4");
+                            while (turnBlocks?.Count > 0 && amount > 0)
                             {
                                 amount -= 2;
-                                blocks.Count--;
+                                turnBlocks.Count--;
                                 railways.Add(type == "T" ? Railway.T4R : Railway.T4L);
                             }
 
-                            blocks = model?.Blocks.FirstOrDefault(_ => _.Name == "T8");
-                            while (blocks?.Count > 0 && amount > 0)
+                            turnBlocks = blocks?.FirstOrDefault(_ => _.Name == "T8");
+                            while (turnBlocks?.Count > 0 && amount > 0)
                             {
                                 amount -= 1;
-                                blocks.Count--;
+                                turnBlocks.Count--;
                                 railways.Add(type == "T" ? Railway.T8R : Railway.T8L);
                             }
 
@@ -118,11 +121,11 @@ namespace LilaApp.Algorithm
                                 throw new ArgumentException(
                                     $"Некорректная длина блока {type}{length} в шаблоне {blueprint}");
 
-                            var blocks = model?.Blocks.FirstOrDefault(_ => _.Name == "B1");
-                            if (blocks?.Count > 0)
+                            var bridgeBlocks = blocks?.FirstOrDefault(_ => _.Name == "B1");
+                            if (bridgeBlocks?.Count > 0)
                             {
                                 length--;
-                                blocks.Count--;
+                                bridgeBlocks.Count--;
                                 railways.Add(Railway.B1);
                             }
 
@@ -133,12 +136,12 @@ namespace LilaApp.Algorithm
                 if (length != 0)
                 {
                     error = $"Недостаточно блоков для производства {match.Value} в шаблоне {blueprint}";
-                    chain = null;
+                    template = null;
                     return false;
                 }
             }
 
-            chain = new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
+            var chain = new RailwayChain(railways.Cast<IRailwayTemplate>().ToArray());
 
             // Создаём автоматические связи симметрии
             // TODO переделать
@@ -154,6 +157,18 @@ namespace LilaApp.Algorithm
                     block.Symmetric = directions[Direction.E].First();
             }
 
+            // Если произвести блок удалось
+            // применяем изменение количества блоков
+            model?.Blocks.Clear();
+            model?.Blocks.AddRange(blocks);
+
+            if (chain.GetRailways().Count == 1)
+            {
+                template = chain[0];
+                return true;
+            }
+
+            template = chain;
             return true;
         }
     }
