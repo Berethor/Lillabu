@@ -167,10 +167,13 @@ namespace Lilabu.Views
                 }
 
                 // Сетка
-                for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
-                    AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
-                for (var i = (int)minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
-                    AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
+                if (VM.ShouldDrawGrid)
+                {
+                    for (var i = (int) minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
+                        AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
+                    for (var i = (int) minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
+                        AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
+                }
 
                 // Ось OY
                 AddLine(new Point(0, 0), new Point(0, 1), Brushes.Black, 0.5);
