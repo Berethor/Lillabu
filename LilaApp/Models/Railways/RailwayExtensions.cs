@@ -136,6 +136,19 @@ namespace LilaApp.Models.Railways
 
             return model;
         }
+
+        /// <summary>
+        /// Вернуть блоки шаблона железной дороги в модель
+        /// </summary>
+        /// <param name="template">Шаблон железной дороги</param>
+        /// <param name="model">Модель</param>
+        public static void ReturnBlocksToModel(this IRailwayTemplate template, Model model)
+        {
+            foreach (var item in template.GetRailways())
+            {
+                model.Blocks.Find(_ => _.Name == item.Name).Count++;
+            }
+        }
     }
 
 }

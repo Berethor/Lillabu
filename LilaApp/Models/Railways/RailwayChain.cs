@@ -152,7 +152,7 @@ namespace LilaApp.Models.Railways
         {
             var list = new List<Railway>();
 
-            for (var element = _head; element != _tail.Next; element = element.Next)
+            for (var element = _head; _tail != null && element != _tail.Next; element = element.Next)
             {
                 switch (element)
                 {
@@ -192,7 +192,9 @@ namespace LilaApp.Models.Railways
 
             for (var element = _head; element != _tail.Next; element = element.Next)
             {
-                if (element?.Symmetric != null)
+                if (element == null) break;
+
+                if (element.Symmetric != null)
                 {
                     applicants.Add(element);
                 }
@@ -225,6 +227,8 @@ namespace LilaApp.Models.Railways
 
             for (var element = _head; element != _tail.Next; element = element.Next)
             {
+                if (element == null) break;
+
                 if (element.Symmetric != null)
                 {
                     applicants.Add(element);
@@ -342,6 +346,8 @@ namespace LilaApp.Models.Railways
 
             for (var i = _head; i != _tail.Next; i = i.Next)
             {
+                if (i == null) break;
+
                 var length = 0;
                 var start = i.Start;
                 var angle = start.Angle;
@@ -349,6 +355,8 @@ namespace LilaApp.Models.Railways
 
                 for (var j = i; j != _tail.Next; j = j.Next)
                 {
+                    if (j == null) break;
+
                     length++;
                     var end = j.End;
                     end = MathFunctions.RotateCoordinates(angle, end);

@@ -127,18 +127,21 @@ namespace Lilabu
             if (_current is Railway railway && railway.Type == RailwayType.L0) return;
 
             // Возвращаем блоки в список доступных
-            foreach (var item in _current.GetRailways())
+            _current.ReturnBlocksToModel(_answer);
+
+            if (_current.Prev != null) _current.Prev.Next = _current.Next;
+            if (_current.Next != null)
             {
-                _answer.Blocks.Find(_ => _.Name == item.Name).Count++;
+                _current.Next.Prev = _current.Prev;
+                _current.Next.Start = _current.Prev?.End ?? Point.Zero;
             }
 
-            _current.Prev.Next = _current.Next;
             _current = _current.Prev;
         }
 
         private void Next()
         {
-            if (_current.Next == null) return;
+            if (_current?.Next == null) return;
 
             _current = _current.Next;
         }
