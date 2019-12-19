@@ -12,13 +12,16 @@ namespace LilaApp.Algorithm.SecondSolverHelper
         public int StartIndex { get; set; }
         public int EndIndex { get; set; }
         public int SideEndIndex { get; set; }
+        public int Turn { get; set; }
+        public int TurnsNum { get; set; }
         public List<Point> details;
         /// <summary>
         /// Список доступных расширений и их связи для куска маршрута
         /// </summary>
         public List<(string command, RouteSide, bool action)> actions;
 
-        public RouteSide(Point routeStartPoint, int index, int sideEndIndex)
+        public RouteSide(Point routeStartPoint, int index,
+            int sideEndIndex,int turn, int turnsNumber)
         {
             StartPoint = routeStartPoint;
             StartIndex = index;
@@ -27,12 +30,15 @@ namespace LilaApp.Algorithm.SecondSolverHelper
             actions = new List<(string command, RouteSide, bool action)>();
             details = new List<Point>();
             SideEndIndex = sideEndIndex;
+            Turn = turn;
+            TurnsNum = turnsNumber;
         }
         public RouteSide(
             Point routeStartPoint,
             Point routeEndPoint,
             int startI, int endI,
-            int sideEndIndex)
+            int sideEndIndex, int turn,
+            int turnsNumber)
         {
             StartPoint = routeStartPoint;
             StartIndex = startI;
@@ -41,6 +47,20 @@ namespace LilaApp.Algorithm.SecondSolverHelper
             actions = new List<(string command, RouteSide, bool action)> ();
             details = new List<Point>();
             SideEndIndex = sideEndIndex;
+            Turn = turn;
+            TurnsNum = turnsNumber;
+        }
+        public RouteSide(RouteSide side)
+        {
+            actions = side.actions;
+            details = side.details;
+            StartPoint = side.StartPoint;
+            StartIndex = side.StartIndex;
+            EndPoint = side.EndPoint;
+            SideEndIndex = side.SideEndIndex;
+            EndIndex = side.EndIndex;
+            Turn = side.Turn;
+            TurnsNum = side.TurnsNum;
         }
         public void AddShiftToDetails(Point shift, int startIndex)
         {
