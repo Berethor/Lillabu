@@ -154,6 +154,23 @@ namespace LilaApp.Models.Railways
         public static Railway T8L => new Railway(RailwayType.T8L);
         public static Railway B1 => new Railway(RailwayType.B1);
 
+        public static Railway From(string blueprint)
+        {
+            switch (blueprint)
+            {
+                case "L1": return Railway.L1;
+                case "L2": return Railway.L2;
+                case "L3": return Railway.L3;
+                case "L4": return Railway.L4;
+                case "T4": return Railway.T4R;
+                case "t4": return Railway.T4L;
+                case "T8": return Railway.T8R;
+                case "t8": return Railway.T8L;
+                case "B1": return Railway.B1;
+                default: throw new ArgumentException($"Неизвестный блок {blueprint}");
+            }
+        }
+
         #endregion
 
         #region Private methods

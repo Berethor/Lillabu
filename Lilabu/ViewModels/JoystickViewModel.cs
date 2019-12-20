@@ -11,6 +11,7 @@ namespace Lilabu.ViewModels
         public BaseCommand SmallLeft { get; set; }
         public BaseCommand Right { get; set; }
         public BaseCommand SmallRight { get; set; }
+        public BaseCommand Bridge { get; set; }
         public BaseCommand Previous { get; set; }
         public BaseCommand Next { get; set; }
 
@@ -53,6 +54,11 @@ namespace Lilabu.ViewModels
                 OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallRight });
             });
 
+            Bridge = new BaseCommand(() =>
+            {
+                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Bridge });
+            });
+
             Previous = new BaseCommand(() =>
             {
                 OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Previous });
@@ -79,6 +85,7 @@ namespace Lilabu.ViewModels
         SmallLeft,
         Right,
         SmallRight,
+        Bridge,
         Previous,
         Next
     }

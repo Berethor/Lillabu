@@ -75,7 +75,7 @@ namespace LilaApp.Models.Railways
             get => _next;
             set {
                 _next = value;
-                _tail.Next = value;
+                if (_tail != null) _tail.Next = value;
             }
         }
 
@@ -86,7 +86,7 @@ namespace LilaApp.Models.Railways
             get => _prev;
             set {
                 _prev = value;
-                _head.Prev = value;
+                if (_head != null) _head.Prev = value;
             }
         }
 
@@ -98,7 +98,7 @@ namespace LilaApp.Models.Railways
             set {
                 _start = value;
 
-                for (var element = _head; element != _tail.Next; element = element.Next)
+                for (var element = _head; _tail != null && element != _tail.Next; element = element.Next)
                 {
                     if (element == _head)
                     {
@@ -117,7 +117,7 @@ namespace LilaApp.Models.Railways
         /// <summary>
         /// Точка окончания текущего шаблона железной дороги
         /// </summary>
-        public Point End => _tail.End;
+        public Point End => _tail?.End ?? Point.Zero;
 
         /// <summary>
         /// Шаблон железной дороги, симметричный текущему.
@@ -394,7 +394,7 @@ namespace LilaApp.Models.Railways
         {
             var directions = new Dictionary<Direction, List<IRailwayTemplate>>();
 
-            for (var i = _head; i != _tail.Next; i = i.Next)
+            for (var i = _head; _tail !=null && i != _tail.Next; i = i.Next)
             {
                 if (!(DirectionExtensions.FromAngle(i.End.Angle) is Direction dir)) continue;
 

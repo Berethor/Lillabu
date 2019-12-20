@@ -33,8 +33,10 @@ namespace Lilabu
                 if (item.SecondBlock == 0) continue;
 
                 var block = _model.Order[item.SecondBlock - 1];
-                if (item.Direction == -1) block = block.ToLower();
-                Add(block);
+                if (item.Direction == -1 && block.StartsWith("T")) block = block.ToLower();
+
+                _current.Append(Railway.From(block));
+                Next();
             }
 
             Context.BotsRating = "Управление:\n" +
@@ -42,6 +44,7 @@ namespace Lilabu
                                  "A = Add 2xT4L\n" +
                                  "S = Remove\n" +
                                  "D = Add 2xT4R\n" +
+                                 "B = Add Bridge\n" +
                                  "Q = Prev item\n" +
                                  "E = Next item\n" +
                                  "Shift+W = L1\n" +
@@ -101,6 +104,7 @@ namespace Lilabu
                 case JoystickKey.SmallLeft: Add("t4"); break;
                 case JoystickKey.Right: Add("T2"); break;
                 case JoystickKey.SmallRight: Add("T4"); break;
+                case JoystickKey.Bridge: Add("B1"); break;
                 case JoystickKey.Next: Next(); break;
                 case JoystickKey.Previous: Prev(); break;
             }
