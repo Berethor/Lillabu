@@ -59,6 +59,28 @@ namespace LilaApp.Algorithm
             TracePrice traceIncome;
             Point pointShift;
 
+            int clusterCount = 16;
+            int iterationCount = 10000;
+
+            IClusterization<double> clusterization = new KMeans(clusterCount, new EuclideanDistance(), iterationCount);
+
+
+            List<DataItem<double>> data = new List<DataItem<double>>();
+
+            for(int i = 0; i< points.Count; i++)
+            {
+                data.Add(new DataItem<double>(new double[3] { points[i].X, points[i].Y, points[i].Price }, null));
+            }
+
+            ClusterizationResult<double> c = clusterization.MakeClusterization(data);
+
+            points = new List<Point>();
+
+            for(int i = 0; i<c.Centroids.Count; i++)
+            {
+                points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
+                    price: c.Centroids[i][2]));
+            }
             _priceC = 1;
 
             foreach (var block in blocks)
@@ -248,7 +270,7 @@ namespace LilaApp.Algorithm
                 OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
                 trace = TraceBuilder.CalculateTrace(_answer);
-                trace.Points = trace.Points.Take(trace.Points.Length - 2).ToArray();
+                trace.Points = trace.Points.Take(trace.Points.Length - 1).ToArray();
 
                 var newTraceIncome = _checker.Solve(_answer);
 
