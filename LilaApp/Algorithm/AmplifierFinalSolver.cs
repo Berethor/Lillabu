@@ -65,13 +65,21 @@ namespace LilaApp.Algorithm
             library.Add("L3");
             library.Add("L4");
             library.AddRange(RailwayTemplates.Library);
+            library.Add("t2");
+            library.Add("T2");
+            library.Add("T2L1");
+            library.Add("t2L1");
+            library.Add("T2L2");
+            library.Add("t2L2");
+            library.Add("T2L3");
+            library.Add("t2L3");
 
             // Перебираем каждый шаблон библиотеки
             foreach (var blueprint in library)
             {
                 var answer = Model.Copy(_answer);
 
-                if (!RailwayFactory.Default.TryBuildTemplate(out var template, out _, blueprint, answer))
+                if (!RailwayFactory.Default.TryBuildTemplate(out var template, out var error, blueprint, answer))
                 {
                     continue;
                 }

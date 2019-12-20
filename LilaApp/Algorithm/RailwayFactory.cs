@@ -33,7 +33,7 @@ namespace LilaApp.Algorithm
         public bool TryBuildTemplate(out IRailwayTemplate template, out string error, string blueprint, Model model)
         {
             // Копируем список блоков
-            var blocks = model?.Blocks.Select(block => (Block) block.Clone()).ToList();
+            var blocks = model?.Blocks.Select(block => (Block)block.Clone()).ToList();
 
             error = null;
 
@@ -92,19 +92,30 @@ namespace LilaApp.Algorithm
                                     return false;
                             }
 
-                            var turnBlocks = blocks?.FirstOrDefault(_ => _.Name == "T4");
-                            while (turnBlocks?.Count > 0 && amount > 0)
+                            var t4Blocks = blocks?.FirstOrDefault(_ => _.Name == "T4");
+                            var t8Blocks = blocks?.FirstOrDefault(_ => _.Name == "T8");
+
+                            if (t8Blocks?.Price < t4Blocks?.Price)
+                            {
+                                while (t8Blocks?.Count > 0 && amount >= 1)
+                                {
+                                    if (t8Blocks?.Count == 1 && amount == 2) break;
+
+                                    amount -= 1;
+                                    t8Blocks.Count--;
+                                    railways.Add(type == "T" ? Railway.T8R : Railway.T8L);
+                                }
+                            }
+                            while (t4Blocks?.Count > 0 && amount >= 2)
                             {
                                 amount -= 2;
-                                turnBlocks.Count--;
+                                t4Blocks.Count--;
                                 railways.Add(type == "T" ? Railway.T4R : Railway.T4L);
                             }
-
-                            turnBlocks = blocks?.FirstOrDefault(_ => _.Name == "T8");
-                            while (turnBlocks?.Count > 0 && amount > 0)
+                            while (t8Blocks?.Count > 0 && amount > 0)
                             {
                                 amount -= 1;
-                                turnBlocks.Count--;
+                                t8Blocks.Count--;
                                 railways.Add(type == "T" ? Railway.T8R : Railway.T8L);
                             }
 
