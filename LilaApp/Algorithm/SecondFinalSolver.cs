@@ -19,6 +19,8 @@ namespace LilaApp.Algorithm
             _checker = checker;
 
             _answer = Model.Copy(_model);
+            _answer.Topology.Clear();
+            _answer.Order.Clear();
 
             Configuration = SecondSolverConfiguration.Default.Load();
             Configuration.Save();
@@ -30,7 +32,7 @@ namespace LilaApp.Algorithm
             return new FinalAnswer()
             {
                 Model = _answer,
-                Price = _checker.Solve(_model),
+                Price = _checker.Solve(_answer),
             };
         }
 
@@ -131,7 +133,7 @@ namespace LilaApp.Algorithm
             order = _newOrder;
             _newOrder = new List<string>(_answer.Order);
             _newTopology = (_answer.Topology.Select(item => new TopologyItem(item))).ToList();
-            OnStepEvent.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
+            OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
             double minLength = double.MaxValue;
             double minRouteLength = double.MaxValue;

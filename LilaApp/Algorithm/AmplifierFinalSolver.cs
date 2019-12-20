@@ -1,9 +1,9 @@
-﻿using LilaApp.Models;
-using LilaApp.Models.Railways;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LilaApp.Models;
+using LilaApp.Models.Railways;
 
 namespace LilaApp.Algorithm
 {
@@ -60,6 +60,8 @@ namespace LilaApp.Algorithm
         private Model _model;
 
         private FinalAnswer Best { get; set; }
+
+        private object _sync = new object();
 
         private void Main()
         {
@@ -143,14 +145,17 @@ namespace LilaApp.Algorithm
                     var result = chain.ConvertToModel(answer);
                     var price = _checker.Solve(result);
 
-                    if (price.Result > Best.Price.Result)
+                    lock (_sync)
                     {
-                        // Проверяем на пересечения:
-                        if (RailwayChain.FromModel(result).FindCrosses().Count == 0)
+                        if (price.Result > Best.Price.Result)
                         {
-                            Best = new FinalAnswer(result, price);
+                            // Проверяем на пересечения:
+                            if (RailwayChain.FromModel(result).FindCrosses().Count == 0)
+                            {
+                                Best = new FinalAnswer(result, price);
 
-                            OnStepEvent?.Invoke(this, Best);
+                                OnStepEvent?.Invoke(this, Best);
+                            }
                         }
                     }
                 }

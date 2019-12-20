@@ -1,8 +1,8 @@
-﻿using LilaApp.Algorithm;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LilaApp.Algorithm;
 
 namespace LilaApp.Models.Railways
 {
@@ -161,6 +161,7 @@ namespace LilaApp.Models.Railways
         /// <returns>Список точек пересечения или пустой список</returns>
         public static List<Point> FindCrosses(this IRailwayTemplate template, bool includeBridges = false)
         {
+            var sync = new object();
             var answer = new List<Point>();
 
             var railways = template.GetRailways().ToArray();
@@ -183,7 +184,10 @@ namespace LilaApp.Models.Railways
 
                             if (bridge == null)
                             {
-                                answer.Add(p);
+                                lock (sync)
+                                {
+                                    answer.Add(p);
+                                }
                                 continue;
                             }
 
@@ -194,12 +198,18 @@ namespace LilaApp.Models.Railways
 
                             if (p != center)
                             {
-                                answer.Add(p);
+                                lock (sync)
+                                {
+                                    answer.Add(p);
+                                }
                             }
                         }
                         else
                         {
-                            answer.Add(p);
+                            lock (sync)
+                            {
+                                answer.Add(p);
+                            }
                         }
                     }
                 }
