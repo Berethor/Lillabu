@@ -148,7 +148,8 @@ namespace Lilabu.ViewModels
 
                     InfoText = context.BotsRating;
 
-                    TraceMapVm.CursorPoint = context.CursorPoint;
+                    TraceMapVm.Cursor1Point = context.Cursor1Point;
+                    TraceMapVm.Cursor2Point = context.Cursor2Point;
 
                     WriteLine(context.ErrorMessage);
                 }

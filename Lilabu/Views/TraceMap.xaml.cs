@@ -128,14 +128,14 @@ namespace Lilabu.Views
                 }
 
                 // Отрисовка треугольника
-                void AddTriangle(Point p1, Brush fill, Brush border = null)
+                void AddTriangle(Point p1, Brush fill, Brush border = null, double radius = 0.5)
                 {
-                    AddEllipse(p1, Brushes.Green);
+                    AddEllipse(p1, border);
                     var x1 = padding + multiplier * (p1.X - minPoint.X);
                     var y1 = padding + multiplier * (p1.Y - minPoint.Y);
 
-                    const double size = 0.5 * multiplier;
-                    const double xc = size; const double yc = size;
+                    var size = radius * multiplier;
+                    var xc = size; var yc = size;
 
                     var triangle = new []
                     {
@@ -241,11 +241,25 @@ namespace Lilabu.Views
                     grid_Map.Children.Add(textBox);
                 }
 
-                // Основной курсор алгоритма WASD
-                if (VM.CursorPoint is Point cursorPoint)
+                // Второй курсор
+                if (VM.Cursor2Point is Point cursorPoint2)
                 {
-                    AddTriangle(cursorPoint, Brushes.Transparent, Brushes.Green);
+                    var fill = cursorPoint2.Price > 0.5
+                        ? new SolidColorBrush(Color.FromArgb(100, 100, 0, 255))
+                        : Brushes.Transparent;
+
+                    AddTriangle(cursorPoint2, fill, Brushes.BlueViolet);
                 }
+                // Основной курсор алгоритма WASD
+                if (VM.Cursor1Point is Point cursorPoint)
+                {
+                    var fill = cursorPoint.Price > 0.5
+                        ? new SolidColorBrush(Color.FromArgb(100, 16, 255, 16))
+                        : Brushes.Transparent;
+
+                    AddTriangle(cursorPoint, fill, Brushes.Green);
+                }
+
             }
         }
 

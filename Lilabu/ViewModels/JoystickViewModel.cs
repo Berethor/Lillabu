@@ -14,6 +14,7 @@ namespace Lilabu.ViewModels
         public BaseCommand Bridge { get; set; }
         public BaseCommand Previous { get; set; }
         public BaseCommand Next { get; set; }
+        public BaseCommand ChangeCursor { get; set; }
 
         public event EventHandler<JoystickEventArg> OnKeyPress;
 
@@ -68,6 +69,11 @@ namespace Lilabu.ViewModels
             {
                 OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Next });
             });
+
+            ChangeCursor = new BaseCommand(() =>
+            {
+                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.ChangeCursor });
+            });
         }
     }
 
@@ -87,7 +93,8 @@ namespace Lilabu.ViewModels
         SmallRight,
         Bridge,
         Previous,
-        Next
+        Next,
+        ChangeCursor,
     }
 
 }

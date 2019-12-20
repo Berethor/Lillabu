@@ -20,6 +20,7 @@
         <KeyBinding Modifiers="Shift" Key="D" Command="{Binding Path=Joystick.SmallRight}" />
         <KeyBinding Key="E" Command="{Binding Path=Joystick.Next}" />
         <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
+        <KeyBinding Key="C" Command="{Binding Path=Joystick.ChangeCursor}" />
     </Window.InputBindings>
     <Grid Margin="5 5 5 0">
         <Grid.Resources>

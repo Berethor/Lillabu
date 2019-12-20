@@ -23,9 +23,11 @@ namespace Lilabu.ViewModels
         public Point[] Points { get => Get<Point[]>(); set => Set(value); }
 
         /// <summary>
-        /// Точка курсора алгоритма WASD
+        /// Точки курсоров алгоритма WASD
         /// </summary>
-        public Point? CursorPoint { get => Get<Point>(); set => Set(value); }
+        public Point? Cursor1Point { get => Get<Point>(); set => Set(value); }
+
+        public Point? Cursor2Point { get => Get<Point>(); set => Set(value); }
 
         /// <summary>
         /// Рисовать ли сетку

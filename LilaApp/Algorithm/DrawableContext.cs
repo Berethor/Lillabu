@@ -24,7 +24,9 @@ namespace LilaApp.Algorithm
     {
         public string BotsRating { get; set; }
 
-        public Point CursorPoint { get; set; }
+        public Point Cursor1Point { get; set; }
+
+        public Point Cursor2Point { get; set; }
 
         public string ErrorMessage { get; set; }
     }
