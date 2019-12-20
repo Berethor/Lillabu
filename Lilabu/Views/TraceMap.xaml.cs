@@ -51,7 +51,7 @@ namespace Lilabu.Views
                     if (point.X > maxPoint.X) maxPoint.X = point.X;
                     if (point.Y > maxPoint.Y) maxPoint.Y = point.Y;
                 }
-                foreach(var point in MainVM.Model.Points)
+                foreach (var point in MainVM.Model.Points)
                 {
                     if (point.X < minPoint.X) minPoint.X = point.X;
                     if (point.Y < minPoint.Y) minPoint.Y = point.Y;
@@ -137,7 +137,7 @@ namespace Lilabu.Views
                     var size = radius * multiplier;
                     var xc = size; var yc = size;
 
-                    var triangle = new []
+                    var triangle = new[]
                     {
                         new WinPoint(xc, yc + size),
                         new WinPoint(xc + size * 0.866, yc - size * 0.5),
@@ -147,16 +147,16 @@ namespace Lilabu.Views
                     var dxy = Convert.ToInt32(p1.Degrees) % 90 == 45 ? size / 0.707 : size;
                     var polygon = new Polygon()
                     {
-                        Width = 2*size,
-                        Height = 2*size,
+                        Width = 2 * size,
+                        Height = 2 * size,
                         Points = new PointCollection(triangle),
                         Stroke = border ?? fill,
                         Fill = fill,
                     };
                     var polygonGrid = new Grid()
                     {
-                        Width = 2*size,
-                        Height = 2*size,
+                        Width = 2 * size,
+                        Height = 2 * size,
                         Margin = new Thickness(x1 - dxy, y1 - dxy, 0, 0),
                         LayoutTransform = new RotateTransform(p1.Degrees),
                         HorizontalAlignment = HorizontalAlignment.Left,
@@ -169,9 +169,9 @@ namespace Lilabu.Views
                 // Сетка
                 if (VM.ShouldDrawGrid)
                 {
-                    for (var i = (int) minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
+                    for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
                         AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
-                    for (var i = (int) minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
+                    for (var i = (int)minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
                         AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
                 }
 
@@ -229,7 +229,7 @@ namespace Lilabu.Views
                     {
                         Text = text,
                         FontSize = fontSize,
-                        Foreground =  color ?? Brushes.Black,
+                        Foreground = color ?? Brushes.Black,
                         LayoutTransform = new ScaleTransform(1, -1),
                         Margin = new Thickness(x1, y1, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
@@ -245,7 +245,7 @@ namespace Lilabu.Views
                     AddEllipse(route, Brushes.Blue);
 
                     // Стоимость точек
-                   AddText($"{route.Price:F0}", route);
+                    AddText($"{route.Price:F0}", route);
                 }
 
                 // Второй курсор
@@ -268,6 +268,15 @@ namespace Lilabu.Views
 
                     AddTriangle(cursorPoint, fill, Brushes.Green);
                     AddText($"x:{cursorPoint.X:F0} y:{cursorPoint.Y:F0}\n", cursorPoint, 5);
+                }
+
+                // Центройды
+                for (var i = 0; i < VM?.Context?.Centroids?.Count; i++)
+                {
+                    if (VM?.Context?.Centroids[i] is Point centroid)
+                    {
+                        AddEllipse(centroid, new SolidColorBrush(Colors.Aqua) { Opacity = 0.5 }, 0.75);
+                    }
                 }
             }
         }

@@ -29,5 +29,7 @@ namespace LilaApp.Algorithm
         public Point Cursor2Point { get; set; }
 
         public string ErrorMessage { get; set; }
+
+        public List<Point> Centroids { get; set; } = new List<Point>();
     }
 }

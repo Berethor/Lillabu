@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using LilaApp.Algorithm;
 using Point = LilaApp.Models.Point;
 
 namespace Lilabu.ViewModels
@@ -28,6 +29,8 @@ namespace Lilabu.ViewModels
         public Point? Cursor1Point { get => Get<Point>(); set => Set(value); }
 
         public Point? Cursor2Point { get => Get<Point>(); set => Set(value); }
+
+        public DrawableContext Context { get; set; }
 
         /// <summary>
         /// Рисовать ли сетку

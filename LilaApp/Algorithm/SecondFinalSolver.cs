@@ -8,7 +8,7 @@ using LilaApp.Algorithm.SecondSolverHelper;
 
 namespace LilaApp.Algorithm
 {
-    public class SecondFinalSolver : IFinalTaskSolver
+    public class SecondFinalSolver : IFinalTaskSolver, IDrawableContextProvider
     {
         #region Implementation of IFinalTaskSolver
 
@@ -22,6 +22,8 @@ namespace LilaApp.Algorithm
 
             Configuration = SecondSolverConfiguration.Default.Load();
             Configuration.Save();
+
+            Context = new DrawableContext();
 
             Run();
 
@@ -65,7 +67,7 @@ namespace LilaApp.Algorithm
             Point pointShift;
 
             int clusterCount = Configuration.ClusterCount;
-            int iterationCount = Configuration.ClusterCount;
+            int iterationCount = Configuration.IterationCount;
 
             IClusterization<double> clusterization = new KMeans(clusterCount, new EuclideanDistance(), iterationCount);
 
@@ -74,7 +76,7 @@ namespace LilaApp.Algorithm
 
             for (int i = 0; i < points.Count; i++)
             {
-                data.Add(new DataItem<double>(new double[3] { points[i].X, points[i].Y, points[i].Price }, null));
+                data.Add(new DataItem<double>(new double[] { points[i].X, points[i].Y/*, points[i].Price*/ }, null));
             }
 
             ClusterizationResult<double> c = clusterization.MakeClusterization(data);
@@ -83,8 +85,9 @@ namespace LilaApp.Algorithm
 
             for (int i = 0; i < c.Centroids.Count; i++)
             {
-                points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
-                    price: c.Centroids[i][2]));
+                var centroidPoint = new Point(c.Centroids[i][0], c.Centroids[i][1]/*, price: c.Centroids[i][2]*/);
+                points.Add(centroidPoint);
+                Context.Centroids.Add(centroidPoint);
             }
             _priceC = 1;
 
@@ -891,5 +894,11 @@ namespace LilaApp.Algorithm
 
             return expandData;
         }
+
+        #region Implementation of IDrawableContextProvider
+
+        public DrawableContext Context { get; set; }
+
+        #endregion
     }
 }

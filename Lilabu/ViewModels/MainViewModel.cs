@@ -195,6 +195,8 @@ namespace Lilabu.ViewModels
                         TraceMapVm.Cursor1Point = context.Cursor1Point;
                         TraceMapVm.Cursor2Point = context.Cursor2Point;
 
+                        TraceMapVm.Context = context;
+
                         WriteLine(context.ErrorMessage);
                     }
                 }
@@ -295,7 +297,8 @@ namespace Lilabu.ViewModels
                         catch (Exception e)
                         {
                             Console.WriteLine(e);
-                            throw;
+                            WriteLine($"При выполнении алгоритма возникла ошибка: \n {e}");
+                            //throw;
                         }
 
                     }, _cts.Token);
@@ -322,6 +325,8 @@ namespace Lilabu.ViewModels
                     WriteLine(string.Join("\r\n", errors.Select(error => error.Message)));
 
                     model.Distances = MathFunctions.GetDistanсeBetweenAllPoints(model.Points);
+
+                    TraceMapVm.Context = null;
 
                     DisplayAnswer(new FinalAnswer(Model, new DirectTaskSolver().Solve(Model)));
 
