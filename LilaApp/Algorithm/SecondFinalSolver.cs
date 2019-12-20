@@ -79,13 +79,13 @@ namespace LilaApp.Algorithm
 
             ClusterizationResult<double> c = clusterization.MakeClusterization(data);
 
-            //points = new List<Point>();
+            points = new List<Point>();
 
-            //for(int i = 0; i < c.Centroids.Count; i++)
-            //{
-            //    points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
-            //        price: c.Centroids[i][2]));
-            //}
+            for (int i = 0; i < c.Centroids.Count; i++)
+            {
+                points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
+                    price: c.Centroids[i][2]));
+            }
             _priceC = 1;
 
             foreach (var block in blocks)
