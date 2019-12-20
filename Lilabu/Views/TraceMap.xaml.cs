@@ -128,14 +128,14 @@ namespace Lilabu.Views
                 }
 
                 // Отрисовка треугольника
-                void AddTriangle(Point p1, Brush fill, Brush border = null)
+                void AddTriangle(Point p1, Brush fill, Brush border = null, double radius = 0.5)
                 {
-                    AddEllipse(p1, Brushes.Green);
+                    AddEllipse(p1, border);
                     var x1 = padding + multiplier * (p1.X - minPoint.X);
                     var y1 = padding + multiplier * (p1.Y - minPoint.Y);
 
-                    const double size = 0.5 * multiplier;
-                    const double xc = size; const double yc = size;
+                    var size = radius * multiplier;
+                    var xc = size; var yc = size;
 
                     var triangle = new []
                     {
@@ -167,10 +167,13 @@ namespace Lilabu.Views
                 }
 
                 // Сетка
-                for (var i = (int)minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
-                    AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
-                for (var i = (int)minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
-                    AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
+                if (VM.ShouldDrawGrid)
+                {
+                    for (var i = (int) minPoint.X - 1; i <= Math.Ceiling(maxPoint.X) + 1; i++)
+                        AddLine(new Point(i, minPoint.Y - 1), new Point(i, maxPoint.Y + 1), Brushes.DarkGray, 0.25);
+                    for (var i = (int) minPoint.Y - 1; i <= Math.Ceiling(maxPoint.Y) + 1; i++)
+                        AddLine(new Point(minPoint.X - 1, i), new Point(maxPoint.X + 1, i), Brushes.DarkGray, 0.25);
+                }
 
                 // Ось OY
                 AddLine(new Point(0, 0), new Point(0, 1), Brushes.Black, 0.5);
@@ -216,20 +219,17 @@ namespace Lilabu.Views
                     AddEllipse(points[i], Brushes.Red, 0.2);
                 }
 
-                // Точки маршрута
-
-                foreach (var route in MainVM.Model.Points)
+                void AddText(string text, Point p, double fontSize = 7, Brush color = null)
                 {
-                    AddEllipse(route, Brushes.Blue);
 
-                    var x1 = padding + multiplier * (route.X - minPoint.X);
-                    var y1 = padding + multiplier * (route.Y - minPoint.Y);
-                    
-                    // Стоимость точек
+                    var x1 = padding + multiplier * (p.X - minPoint.X);
+                    var y1 = padding + multiplier * (p.Y - minPoint.Y);
+
                     var textBox = new TextBlock()
                     {
-                        FontSize = 8,
-                        Text = $"{route.Price:F0}",
+                        Text = text,
+                        FontSize = fontSize,
+                        Foreground =  color ?? Brushes.Black,
                         LayoutTransform = new ScaleTransform(1, -1),
                         Margin = new Thickness(x1, y1, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
@@ -238,10 +238,36 @@ namespace Lilabu.Views
                     grid_Map.Children.Add(textBox);
                 }
 
-                // Основной курсор алгоритма WASD
-                if (VM.CursorPoint is Point cursorPoint)
+                // Точки маршрута
+
+                foreach (var route in MainVM.Model.Points)
                 {
-                    AddTriangle(cursorPoint, Brushes.Transparent, Brushes.Green);
+                    AddEllipse(route, Brushes.Blue);
+
+                    // Стоимость точек
+                   AddText($"{route.Price:F0}", route);
+                }
+
+                // Второй курсор
+                if (VM.Cursor2Point is Point cursorPoint2)
+                {
+                    var fill = cursorPoint2.Price > 0.5
+                        ? new SolidColorBrush(Color.FromArgb(100, 100, 0, 255))
+                        : Brushes.Transparent;
+
+                    AddTriangle(cursorPoint2, fill, Brushes.BlueViolet);
+
+                    AddText($"x:{cursorPoint2.X:F0} y:{cursorPoint2.Y:F0}\n", cursorPoint2, 5);
+                }
+                // Основной курсор алгоритма WASD
+                if (VM.Cursor1Point is Point cursorPoint)
+                {
+                    var fill = cursorPoint.Price > 0.5
+                        ? new SolidColorBrush(Color.FromArgb(100, 16, 255, 16))
+                        : Brushes.Transparent;
+
+                    AddTriangle(cursorPoint, fill, Brushes.Green);
+                    AddText($"x:{cursorPoint.X:F0} y:{cursorPoint.Y:F0}\n", cursorPoint, 5);
                 }
             }
         }

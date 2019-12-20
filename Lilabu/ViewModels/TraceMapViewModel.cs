@@ -23,22 +23,28 @@ namespace Lilabu.ViewModels
         public Point[] Points { get => Get<Point[]>(); set => Set(value); }
 
         /// <summary>
-        /// Точка курсора алгоритма WASD
+        /// Точки курсоров алгоритма WASD
         /// </summary>
-        public Point? CursorPoint { get => Get<Point>(); set => Set(value);
+        public Point? Cursor1Point { get => Get<Point>(); set => Set(value); }
 
-        }
+        public Point? Cursor2Point { get => Get<Point>(); set => Set(value); }
 
-    #endregion
+        /// <summary>
+        /// Рисовать ли сетку
+        /// </summary>
+        public bool ShouldDrawGrid { get => Get<bool>(); set => Set(value); }
 
-    /// <summary>
-    /// Конструктор по умолчанию
-    /// </summary>
-    public TraceMapViewModel()
+        #endregion
+
+        /// <summary>
+        /// Конструктор по умолчанию
+        /// </summary>
+        public TraceMapViewModel()
         {
             Width = 100;
             Height = 100;
             Points = new Point[0];
+            ShouldDrawGrid = true;
         }
     }
 }

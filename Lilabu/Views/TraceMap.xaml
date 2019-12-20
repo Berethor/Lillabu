@@ -42,5 +42,6 @@
             <TextBlock Text="Масштаб: "/>
             <Slider Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Minimum="1" Maximum="100" x:Name="slider"/>
         </Grid>
+        <CheckBox IsChecked="{Binding Path=TraceMapVm.ShouldDrawGrid}" VerticalAlignment="Bottom" Margin="5">Сетка</CheckBox>
     </Grid>
 </UserControl>

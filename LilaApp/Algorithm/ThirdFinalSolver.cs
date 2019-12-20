@@ -42,10 +42,10 @@ namespace LilaApp.Algorithm
 
             var compass = RailwayTemplates.Compass(cycle);
 
-
             var l = 2;
-            var head = cycle;
-            for (var k = 0; k < 2; k++)
+            const int CYCLES_COUNT = 5;
+            IRailwayTemplate head = cycle;
+            for (var k = 0; k < CYCLES_COUNT; k++)
             {
                 // Left
                 for (var i = 0; i < l; i++)
@@ -62,7 +62,7 @@ namespace LilaApp.Algorithm
                 // Up
                 for (var i = 0; i < l; i++)
                 {
-                    if (!chain1.TryScale(Direction.E, Railway.L3)) break;
+                    if (!chain1.TryScale(Direction.N, Railway.L3)) break;
                     DisplayStep(cycle);
                 }
 

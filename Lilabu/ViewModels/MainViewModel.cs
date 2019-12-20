@@ -3,16 +3,20 @@ using LilaApp.Algorithm;
 using LilaApp.Models;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using LilaApp.Algorithm.Genetic;
+using LilaApp.Models.Railways;
 
 namespace Lilabu.ViewModels
 {
     public class MainViewModel : ABaseViewModel
     {
         #region Properties
+
+        public string Version { get => Get<string>(); set => Set(value); }
 
         /// <summary>
         /// Заголовок
@@ -57,11 +61,18 @@ namespace Lilabu.ViewModels
         public string SelectedSolver
         {
             get => _selectedSolver;
-            set
-            {
+            set {
+
+                // Останавливаем старый алгоритм
+                var wasRunning = IsRunning;
+                if (wasRunning) RunCommand?.Execute(null);
+
                 _selectedSolver = value;
                 Configuration.LastSolver = value;
                 Configuration.Save();
+
+                // Запускаем новый алгоритм
+                if (wasRunning) RunCommand?.Execute(null);
             }
         }
 
@@ -79,6 +90,26 @@ namespace Lilabu.ViewModels
         /// Текст кнопки запуска / остановки
         /// </summary>
         public string RunText { get => Get<string>(); set => Set(value); }
+
+        /// <summary>
+        /// Отображать процесс решения
+        /// </summary>
+        public bool ShouldDraw
+        {
+            get => Get<bool>();
+            set
+            {
+                Set(value);
+
+                if (value && Model != null)
+                {
+                    DisplayModelStep(this, new FinalAnswer(Model, new DirectTaskSolver().Solve(Model)));
+                }
+
+                Configuration.DisableGui = !value;
+                Configuration.Save();
+            }
+        }
 
         /// <summary>
         /// Конфигурация
@@ -116,7 +147,19 @@ namespace Lilabu.ViewModels
 
             var trace = TraceBuilder.CalculateTrace(Model);
             WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
-            TraceMapVm.Points = trace.Points;
+
+            // Проверяем на пересечения:
+            var crosses = RailwayChain.FromModel(Model).FindCrosses();
+            foreach (var cross in crosses)
+            {
+                trace.Exceptions.Add(new Exception($"Пересечение блоков в точке {cross}"));
+                WriteLine($"Ошибка: Пересечение блоков в точке {cross}");
+            }
+
+            if (ShouldDraw)
+            {
+                TraceMapVm.Points = trace.Points;
+            }
 
             WriteLine($"Прибыль с точек маршрута: {answer.Price.Income}");
             WriteLine($"Стоимость блоков: {answer.Price.Price}");
@@ -135,49 +178,78 @@ namespace Lilabu.ViewModels
         /// <param name="answer"></param>
         public void DisplayModelStep(object sender, FinalAnswer answer)
         {
-
             Application.Current.Dispatcher?.Invoke((Action)(() =>
             {
                 Output = string.Empty;
 
-                FileLoaderVm.InputText = answer.Model.Serialize();
-
-                if (sender is IDrawableContextProvider contextProvider)
+                if (ShouldDraw)
                 {
-                    var context = contextProvider.Context;
+                    FileLoaderVm.InputText = answer.Model.Serialize();
 
-                    InfoText = context.BotsRating;
+                    if (sender is IDrawableContextProvider contextProvider)
+                    {
+                        var context = contextProvider.Context;
 
-                    TraceMapVm.CursorPoint = context.CursorPoint;
+                        InfoText = context.BotsRating;
 
-                    WriteLine(context.ErrorMessage);
+                        TraceMapVm.Cursor1Point = context.Cursor1Point;
+                        TraceMapVm.Cursor2Point = context.Cursor2Point;
+
+                        WriteLine(context.ErrorMessage);
+                    }
+                }
+                else
+                {
+                    FileLoaderVm.InputText = "Визуализация отключена";
+                    WriteLine("Визуализация отключена");
                 }
 
                 DisplayAnswer(answer);
 
             }));
 
-            if (sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
+            if (ShouldDraw && sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
             {
                 // Задержка отрисовки для анимации
                 Thread.Sleep(10);
             }
         }
 
-
         private CancellationTokenSource _cts;
 
         /// <summary>
         ///  Конструктор по-умолчанию
         /// </summary>
-        public MainViewModel()
+        public MainViewModel(Window mainWindow = null)
         {
             Title = "Lilabu Application";
+            Version = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
 
             RunText = "Запустить";
 
             Joystick = new JoystickViewModel();
-            
+            Joystick.InsertTemplate = new BaseCommand(() =>
+            {
+                var window = new InputTemplateWindow
+                {
+                    Owner = mainWindow, 
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+
+                window.OnResult += (_, text) =>
+                {
+                    var args = new JoystickEventArg(JoystickKey.InsertTemplate)
+                    {
+                        Template = text,
+                    };
+
+                    Joystick.InvokeKeyPress(Joystick, args);
+                };
+
+                window.Show();
+                window.TextBoxTemplate.Focus();
+            });
+
             Configuration = new MainConfiguration().Load();
 
             _solvers = new IFinalTaskSolver[]
@@ -187,9 +259,12 @@ namespace Lilabu.ViewModels
                 new ThirdFinalSolver(),
                 new WasdFinalSolver(Joystick), 
                 new GeneticFinalSolver(), 
+                new AmplifierFinalSolver(), 
             };
 
             SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;
+
+            ShouldDraw = (!Configuration?.DisableGui) ?? true;
 
             var checker = new DirectTaskSolver();
 
@@ -210,6 +285,8 @@ namespace Lilabu.ViewModels
                             var answer = solver.Solve(Model, checker);
 
                             DisplayModelStep(null, answer);
+
+                            if (IsRunning) RunCommand?.Execute(null);
                         }
                         catch (OperationCanceledException)
                         {
@@ -268,6 +345,11 @@ namespace Lilabu.ViewModels
         /// Последний используемый алгоритм
         /// </summary>
         public string LastSolver { get; set; }
+
+        /// <summary>
+        /// Отображать ли маршрут
+        /// </summary>
+        public bool DisableGui { get; set; }
 
         #endregion
 

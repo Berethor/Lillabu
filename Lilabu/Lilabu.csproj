@@ -58,6 +58,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="InputTemplateWindow.xaml.cs">
+      <DependentUpon>InputTemplateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\InputTemplateViewModel.cs" />
     <Compile Include="WasdFinalSolver.cs" />
     <Compile Include="ViewModels\ABaseViewModel.cs" />
     <Compile Include="ViewModels\BaseCommand.cs" />
@@ -75,6 +79,10 @@
     <Compile Include="Views\TraceMap.xaml.cs">
       <DependentUpon>TraceMap.xaml</DependentUpon>
     </Compile>
+    <Page Include="InputTemplateWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -1,5 +1,5 @@
-﻿using System;
-using LilaApp.Models;
+﻿using LilaApp.Models;
+using System;
 
 namespace LilaApp.Generator
 {
@@ -24,14 +24,14 @@ namespace LilaApp.Generator
         };
 
         #region .ctor
-        
+
         public Generator() { }
 
         public Generator(GeneratorConfiguration configuration)
         {
             Configuration = configuration;
         }
-        
+
         #endregion
 
         private readonly Random _random = new Random();
@@ -58,10 +58,12 @@ namespace LilaApp.Generator
             var min = Configuration.MinRoutePoint;
             var max = Configuration.MaxRoutePoint;
 
+            model.Points.Add(new Point(0, 0, 0, GetRandom(Configuration.RoutePrice)));
+
             for (var i = 0; i < GetRandom(Configuration.RoutesCount); i++)
             {
-                var x = min.X + _random.NextDouble() * (max.X - min.X);
-                var y = min.Y + _random.NextDouble() * (max.Y - min.Y);
+                var x = Math.Round(min.X + _random.NextDouble() * (max.X - min.X), 2);
+                var y = Math.Round(min.Y + _random.NextDouble() * (max.Y - min.Y), 2);
                 var price = GetRandom(Configuration.RoutePrice);
 
                 var route = new Point(x, y, price: price);

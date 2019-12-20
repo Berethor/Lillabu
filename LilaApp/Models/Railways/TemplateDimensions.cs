@@ -51,8 +51,11 @@ namespace LilaApp.Models.Railways
             var points = railways.Select(_ => _.Start).ToList();
             points.AddRange(railways.Select(_ => _.End));
 
-            Min = new Point(points.Min(_ => _.X), points.Min(_ => _.Y));
-            Max = new Point(points.Max(_ => _.X), points.Max(_ => _.Y));
+            if (points.Count > 0)
+            {
+                Min = new Point(points.Min(_ => _.X), points.Min(_ => _.Y));
+                Max = new Point(points.Max(_ => _.X), points.Max(_ => _.Y));
+            }
 
             Output = new Point(
                 template.End.X - template.Start.X,

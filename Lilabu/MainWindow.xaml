@@ -14,11 +14,18 @@
         <KeyBinding Key="S" Command="{Binding Path=Joystick.Down}" />
         <KeyBinding Key="A" Command="{Binding Path=Joystick.Left}" />
         <KeyBinding Key="D" Command="{Binding Path=Joystick.Right}" />
+        <KeyBinding Key="B" Command="{Binding Path=Joystick.Bridge}" />
         <KeyBinding Modifiers="Shift" Key="W" Command="{Binding Path=Joystick.SmallUp}" />
         <KeyBinding Modifiers="Shift" Key="A" Command="{Binding Path=Joystick.SmallLeft}" />
         <KeyBinding Modifiers="Shift" Key="D" Command="{Binding Path=Joystick.SmallRight}" />
         <KeyBinding Key="E" Command="{Binding Path=Joystick.Next}" />
         <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
+        <KeyBinding Modifiers="Control" Key="E" Command="{Binding Path=Joystick.LargeNext}" />
+        <KeyBinding Modifiers="Control" Key="Q" Command="{Binding Path=Joystick.LargePrev}" />
+        <KeyBinding Key="Z" Command="{Binding Path=Joystick.SyncCursor}" />
+        <KeyBinding Key="X" Command="{Binding Path=Joystick.SwapCursor}" />
+        <KeyBinding Key="C" Command="{Binding Path=Joystick.ChangeCursor}" />
+        <KeyBinding Key="V" Command="{Binding Path=Joystick.InsertTemplate}" />
     </Window.InputBindings>
     <Grid Margin="5 5 5 0">
         <Grid.Resources>
@@ -63,7 +70,9 @@
             <views:TraceMap DataContext="{Binding Path=.}" />
         </GroupBox>
 
-        <TextBlock Grid.Column="2" Margin="0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
+        <CheckBox IsChecked="{Binding Path=ShouldDraw}" Grid.Column="1" Margin="20" HorizontalAlignment="Left" VerticalAlignment="Top">GUI</CheckBox>
+
+        <TextBlock Grid.Column="1" Margin="12" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
                    Text="{Binding Path=InfoText}" FontFamily="Courier New"/>
 
         <GridSplitter Grid.Column="1" Grid.ColumnSpan="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="10" Background="White" Margin="0 0 0 -5"/>
@@ -71,6 +80,6 @@
             <TextBox Margin="5" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Text="{Binding Path=Output}" TextWrapping="Wrap"/>
         </GroupBox>
 
-
+        <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Text="{Binding Path=Version, StringFormat='Версия программы: v{0}'}"  Margin="0,-5,8,0"  FontSize="9"  Foreground="DarkGray" />
     </Grid>
 </Window>
