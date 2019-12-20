@@ -3,6 +3,7 @@ using LilaApp.Models.Railways;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LilaApp.Algorithm
 {
@@ -28,6 +29,10 @@ namespace LilaApp.Algorithm
             catch (OperationCanceledException)
             {
                 Console.WriteLine("Алгоритм AmplifierFinalSolver остановлен");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Ошибка в AmplifierFinalSolver: {e}");
             }
             finally
             {
@@ -58,30 +63,39 @@ namespace LilaApp.Algorithm
 
         private void Main()
         {
-            var library = new List<string>();
-            library.Add("L1L1L1");
-            library.Add("L1L1");
-            library.Add("L2");
-            library.Add("L3");
-            library.Add("L4");
+            var library = new List<string>
+            {
+                "L1L1L1",
+                "L1L1",
+                "L2",
+                "L3",
+                "L4",
+
+                "t2",
+                "T2",
+                "T2L1",
+                "t2L1",
+                "T2L2",
+                "t2L2",
+                "T2L3",
+                "t2L3",
+
+                "L6t2t2L6",
+                "L6T2T2L6",
+            };
             library.AddRange(RailwayTemplates.Library);
-            library.Add("t2");
-            library.Add("T2");
-            library.Add("T2L1");
-            library.Add("t2L1");
-            library.Add("T2L2");
-            library.Add("t2L2");
-            library.Add("T2L3");
-            library.Add("t2L3");
 
             // Перебираем каждый шаблон библиотеки
-            foreach (var blueprint in library)
+            //foreach (var blueprint in library)
+
+            Parallel.ForEach(library, blueprint =>
             {
                 var answer = Model.Copy(_answer);
 
                 if (!RailwayFactory.Default.TryBuildTemplate(out var template, out var error, blueprint, answer))
                 {
-                    continue;
+                    //continue;
+                    return;
                 }
 
                 var chain = RailwayChain.FromModel(answer);
@@ -111,6 +125,7 @@ namespace LilaApp.Algorithm
                         cur = cur.Next;
                         if (cur is Railway r && r.IsHead()) break;
                     }
+
                     if (finish)
                         continue;
 
@@ -139,7 +154,8 @@ namespace LilaApp.Algorithm
                         }
                     }
                 }
-            }
+            });
+
         }
     }
 }
