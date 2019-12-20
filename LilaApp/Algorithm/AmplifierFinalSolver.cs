@@ -32,6 +32,8 @@ namespace LilaApp.Algorithm
             finally
             {
                 var ans = Model.Copy(Best.Model);
+                ans.Blocks.Clear();
+                ans.Blocks.AddRange(_model.Blocks);
                 Best = new FinalAnswer(ans, _checker.Solve(ans));
             }
 

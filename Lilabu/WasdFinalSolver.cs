@@ -23,24 +23,11 @@ namespace Lilabu
             _answer = Model.Copy(model);
             _checker = checker;
 
-            _chain = new Railway(RailwayType.L0);
-            _current1 = _chain;
-            _current2 = _chain;
+            var chain = RailwayChain.FromModel(_answer, true);
+            _current2 = _current1 = chain[0];
+            _chain = chain;
 
             Context = new DrawableContext();
-
-            foreach (var item in _model.Topology)
-            {
-                if (item.SecondBlock == 0) continue;
-
-                var block = _model.Order[item.SecondBlock - 1];
-                if (item.Direction == -1 && block.StartsWith("T")) block = block.ToLower();
-
-                _current1.Append(Railway.From(block));
-                Next();
-            }
-
-            _current2 = _current1;
 
             Context.BotsRating = "Управление:\n" +
                                  "W: Add L3\n" +

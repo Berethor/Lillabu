@@ -23,17 +23,31 @@ namespace Lilabu
 
             void AddText(string text)
             {
-                var pos = TextBoxTemplate.CaretIndex;
-                VM.InputText = VM.InputText.Insert(pos, text);
-                TextBoxTemplate.CaretIndex = pos + text.Length;
+                try
+                {
+                    var pos = TextBoxTemplate.CaretIndex;
+                    VM.InputText = VM.InputText.Insert(pos, text);
+                    TextBoxTemplate.CaretIndex = pos + text.Length;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
 
             void Remove()
             {
-                var pos = TextBoxTemplate.CaretIndex;
-                if (pos < 2) return;
-                VM.InputText = VM.InputText.Substring(0, pos - 2) + VM.InputText.Substring(pos);
-                TextBoxTemplate.CaretIndex = pos;
+                try
+                {
+                    var pos = TextBoxTemplate.CaretIndex;
+                    if (pos < 2) return;
+                    VM.InputText = VM.InputText.Substring(0, pos - 2) + VM.InputText.Substring(pos);
+                    TextBoxTemplate.CaretIndex = pos;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
 
             VM.Joystick = new JoystickViewModel()
