@@ -81,6 +81,23 @@ namespace Lilabu.ViewModels
         public string RunText { get => Get<string>(); set => Set(value); }
 
         /// <summary>
+        /// Отображать процесс решения
+        /// </summary>
+        public bool ShouldDraw
+        {
+            get => Get<bool>();
+            set
+            {
+                Set(value);
+
+                if (value && Model != null)
+                {
+                    DisplayModelStep(this, new FinalAnswer(Model, new DirectTaskSolver().Solve(Model)));
+                }
+            }
+        }
+
+        /// <summary>
         /// Конфигурация
         /// </summary>
         private MainConfiguration Configuration { get; }
@@ -116,7 +133,11 @@ namespace Lilabu.ViewModels
 
             var trace = TraceBuilder.CalculateTrace(Model);
             WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
-            TraceMapVm.Points = trace.Points;
+
+            if (ShouldDraw)
+            {
+                TraceMapVm.Points = trace.Points;
+            }
 
             WriteLine($"Прибыль с точек маршрута: {answer.Price.Income}");
             WriteLine($"Стоимость блоков: {answer.Price.Price}");
@@ -135,30 +156,37 @@ namespace Lilabu.ViewModels
         /// <param name="answer"></param>
         public void DisplayModelStep(object sender, FinalAnswer answer)
         {
-
             Application.Current.Dispatcher?.Invoke((Action)(() =>
             {
                 Output = string.Empty;
 
-                FileLoaderVm.InputText = answer.Model.Serialize();
-
-                if (sender is IDrawableContextProvider contextProvider)
+                if (ShouldDraw)
                 {
-                    var context = contextProvider.Context;
+                    FileLoaderVm.InputText = answer.Model.Serialize();
 
-                    InfoText = context.BotsRating;
+                    if (sender is IDrawableContextProvider contextProvider)
+                    {
+                        var context = contextProvider.Context;
 
-                    TraceMapVm.Cursor1Point = context.Cursor1Point;
-                    TraceMapVm.Cursor2Point = context.Cursor2Point;
+                        InfoText = context.BotsRating;
 
-                    WriteLine(context.ErrorMessage);
+                        TraceMapVm.Cursor1Point = context.Cursor1Point;
+                        TraceMapVm.Cursor2Point = context.Cursor2Point;
+
+                        WriteLine(context.ErrorMessage);
+                    }
+                }
+                else
+                {
+                    FileLoaderVm.InputText = "Визуализация отключена";
+                    WriteLine("Визуализация отключена");
                 }
 
                 DisplayAnswer(answer);
 
             }));
 
-            if (sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
+            if (ShouldDraw && sender != null && SelectedSolver != typeof(WasdFinalSolver).Name)
             {
                 // Задержка отрисовки для анимации
                 Thread.Sleep(10);
@@ -191,6 +219,8 @@ namespace Lilabu.ViewModels
             };
 
             SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;
+
+            ShouldDraw = (!Configuration?.DisableGui) ?? true;
 
             var checker = new DirectTaskSolver();
 
@@ -269,6 +299,11 @@ namespace Lilabu.ViewModels
         /// Последний используемый алгоритм
         /// </summary>
         public string LastSolver { get; set; }
+
+        /// <summary>
+        /// Отображать ли маршрут
+        /// </summary>
+        public bool DisableGui { get; set; }
 
         #endregion
 

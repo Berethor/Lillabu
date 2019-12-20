@@ -65,6 +65,8 @@
             <views:TraceMap DataContext="{Binding Path=.}" />
         </GroupBox>
 
+        <CheckBox IsChecked="{Binding Path=ShouldDraw}" Grid.Column="1" Margin="20" HorizontalAlignment="Left" VerticalAlignment="Top">GUI</CheckBox>
+
         <TextBlock Grid.Column="1" Margin="12" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#AAFFFFFF"
                    Text="{Binding Path=InfoText}" FontFamily="Courier New"/>
 
