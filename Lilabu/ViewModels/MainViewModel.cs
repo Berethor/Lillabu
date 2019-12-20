@@ -94,6 +94,9 @@ namespace Lilabu.ViewModels
                 {
                     DisplayModelStep(this, new FinalAnswer(Model, new DirectTaskSolver().Solve(Model)));
                 }
+
+                Configuration.DisableGui = !value;
+                Configuration.Save();
             }
         }
 
