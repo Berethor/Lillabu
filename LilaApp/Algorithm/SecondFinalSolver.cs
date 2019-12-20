@@ -72,20 +72,20 @@ namespace LilaApp.Algorithm
 
             List<DataItem<double>> data = new List<DataItem<double>>();
 
-            for(int i = 0; i< points.Count; i++)
+            for (int i = 0; i < points.Count; i++)
             {
                 data.Add(new DataItem<double>(new double[3] { points[i].X, points[i].Y, points[i].Price }, null));
             }
 
             ClusterizationResult<double> c = clusterization.MakeClusterization(data);
 
-            points = new List<Point>();
+            //points = new List<Point>();
 
-            for(int i = 0; i<c.Centroids.Count; i++)
-            {
-                points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
-                    price: c.Centroids[i][2]));
-            }
+            //for(int i = 0; i < c.Centroids.Count; i++)
+            //{
+            //    points.Add(new Point(c.Centroids[i][0], c.Centroids[i][1],
+            //        price: c.Centroids[i][2]));
+            //}
             _priceC = 1;
 
             foreach (var block in blocks)
@@ -149,6 +149,7 @@ namespace LilaApp.Algorithm
                 return true;
             }).ToList();
 
+            bool isBreachEnabled = true;
 
             while (!Token.IsCancellationRequested)
             {
@@ -209,7 +210,9 @@ namespace LilaApp.Algorithm
                         .Select(action => action))
                     {
                         AddElement(detailName, action.Item2, out pointShift, order, topology, sortedStraightBlocks);
-                        UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
+                        UpdateSides(pointShift, sides, sides.FindIndex(a =>
+                           a.StartIndex - action.Item2.EndIndex == 0 || a.EndIndex - action.Item2.EndIndex == 0),
+                           action.Item2.SideEndIndex);
                         return true;
                     }
 
@@ -233,13 +236,24 @@ namespace LilaApp.Algorithm
                         {
                             if (tries > 100)
                             {
-                                if (i == sides.Count - 1)
+                                if (!isBreachEnabled)
+                                    break;
+                                try
                                 {
-                                    trace = addReverse(blocks,ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i - 1].EndIndex, ref pointsCopy);
+                                    if (i == sides.Count - 1)
+                                    {
+                                        trace = addReverse(blocks, ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i - 1].EndIndex, ref pointsCopy);
+                                    }
+                                    else
+                                    {
+                                        trace = addReverse(blocks, ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i].EndIndex, ref pointsCopy);
+                                    }
                                 }
-                                else
+                                catch (Exception ex)
                                 {
-                                    trace = addReverse(blocks,ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i].EndIndex, ref pointsCopy);
+                                    order = _answer.Order;
+                                    topology = _answer.Topology;
+                                    isBreachEnabled = false;
                                 }
                                 break;
                             }
@@ -317,8 +331,8 @@ namespace LilaApp.Algorithm
             int turn, TraceBuilder.Result trace, int index,
             ref List<Point> pointsCopy)
         {
-            if (blocks.Find(_ => _.Name.StartsWith("B"))?.Count > 0 
-                && sortedStraightElements.Find(_ =>_.Name == "L1")?.Count > 2)
+            if (blocks.Find(_ => _.Name.StartsWith("B"))?.Count > 0
+                && sortedStraightElements.Find(_ => _.Name == "L1")?.Count > 2)
             {
                 var startIndex = index;
                 double angle = 0;
@@ -326,7 +340,7 @@ namespace LilaApp.Algorithm
                 {
                     angle = trace.Points[index].Angle;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
 
                 }
@@ -334,14 +348,13 @@ namespace LilaApp.Algorithm
                 var sideIndex = sides.FindIndex(a =>
                            a.StartIndex - index == 0 || a.EndIndex - index == 0);
 
-                if(sides[sideIndex].TurnsNum == 0)
+                if (sides[sideIndex].TurnsNum == 0)
                 {
                     return trace;
                 }
 
                 var copyOrder = new List<string>(order);
                 var copyTopology = (topology.Select(item => new TopologyItem(item))).ToList();
-                var copySides = (sides.Select(item => new RouteSide(item))).ToList();
 
                 for (int k = 0; k < sides[sideIndex].TurnsNum; k++)
                 {
@@ -362,32 +375,42 @@ namespace LilaApp.Algorithm
                 _answer.Topology = topology;
 
                 OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
-                ///
-                int insertIndex = sideIndex + 1;
+
+                List<string> firstSide = new List<string>();
+                List<string> firstTurn = new List<string>();
+
+                List<string> secondSide = new List<string>();
+                List<string> secondTurn = new List<string>();
+
+                List<string> thirdSide = new List<string>();
+                List<string> thirdTurn = new List<string>();
+
+                List<string> forthSide = new List<string>();
+                List<string> forthTurn = new List<string>();
+
                 try
                 {
-                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
-                        order, topology, sides, turn * -1, out trace, ref index,
-                        insertIndex, 6);
-                    ///
-                    insertIndex++;
-                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
-                        order, topology, sides, turn * -1, out trace, ref index,
-                        insertIndex, 0);
+                    firstSide = HelperActions.GetStraightElements(ref sortedStraightElements, 6);
+                    firstTurn = firstSide.Concat(HelperActions.GetTurnElements(sortedTurnElements)).ToList();
 
-                    insertIndex++;
+                    secondSide = HelperActions.GetStraightElements(ref sortedStraightElements, 0);
+                    secondTurn = secondSide.Concat(HelperActions.GetTurnElements(sortedTurnElements)).ToList();
 
-                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
-                        order, topology, sides, turn * -1, out trace, ref index,
-                        insertIndex, 0);
+                    thirdSide = HelperActions.GetStraightElements(ref sortedStraightElements, 0);
+                    thirdTurn = thirdSide.Concat(HelperActions.GetTurnElements(sortedTurnElements)).ToList();
 
-                    insertIndex++;
+                    if (sortedStraightElements.Find(a => a.Name == "L1").Count >= 2)
+                    {
+                        forthSide.AddRange(new string[] { "L1", "B1", "L1" });
+                        forthTurn.AddRange(new string[] { "L1", "B1", "L1" });
+                        sortedStraightElements.Find(a => a.Name == "L1").Count -= 2;
+                        blocks.Find(a => a.Name == "B1").Count -= 1;
+                    }
+                    else
+                    {
+                        throw new Exception("Не хватает эл-ов");
+                    }
 
-                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
-                        order, topology, sides, turn * -1, out trace, ref index,
-                        insertIndex, -1);
-
-                    blocks.Find(a => a.Name == "B1").Count -= 1;
                 }
                 catch (Exception ex)
                 {
@@ -395,11 +418,29 @@ namespace LilaApp.Algorithm
                     order = copyOrder;
                     _answer.Topology = copyTopology;
                     topology = copyTopology;
-                    sides = copySides;
                     trace = TraceBuilder.CalculateTrace(_answer);
                     OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
-                    return trace;
+                    throw ex;
                 }
+                ///
+                int insertIndex = sideIndex + 1;
+
+                AddReverseSide(order, topology, sides, turn * -1, out trace, ref index,
+                    insertIndex, 6, firstSide, firstTurn);
+                ///
+                insertIndex++;
+                AddReverseSide(order, topology, sides, turn * -1, out trace, ref index,
+                    insertIndex, 0, secondSide, secondTurn);
+
+                insertIndex++;
+
+                AddReverseSide(order, topology, sides, turn * -1, out trace, ref index,
+                    insertIndex, 0, thirdSide, thirdTurn);
+
+                insertIndex++;
+
+                AddReverseSide(order, topology, sides, turn * -1, out trace, ref index,
+                    insertIndex, -1, forthSide, forthTurn);
 
                 _answer.Order = order;
                 _answer.Topology = topology;
@@ -646,35 +687,11 @@ namespace LilaApp.Algorithm
             return trace;
         }
 
-        private void AddReverseSide(ref List<Block> sortedStraightElements,
-            List<Block> sortedTurnElements, List<string> order,
+        private void AddReverseSide(List<string> order,
             List<TopologyItem> topology, List<RouteSide> sides,
             int turn, out TraceBuilder.Result trace, ref int index,
-            int insertIndex, int staightLength)
+            int insertIndex, int staightLength, List<string> firstSide, List<string> firstTurn)
         {
-            List<string> firstSide = new List<string>();
-            List<string> firstTurn = new List<string>();
-
-            if (staightLength == -1)
-            {
-
-                if (sortedStraightElements.Find(a => a.Name == "L1").Count >= 2)
-                {
-                    firstSide.AddRange(new string[] { "L1", "B1", "L1" });
-                    firstTurn.AddRange(new string[] { "L1", "B1", "L1" });
-                    sortedStraightElements.Find(a => a.Name == "L1").Count -= 2;
-                }
-                else
-                {
-                    throw new Exception("Не хватает эл-ов");
-                }
-            }
-            else
-            {
-                firstSide = HelperActions.GetStraightElements(ref sortedStraightElements, staightLength);
-                firstTurn = firstSide.Concat(HelperActions.GetTurnElements(sortedTurnElements)).ToList();
-            }
-
             order.InsertRange(index, firstTurn);
             for (int j = firstTurn.Count() - 1; j >= 0; j--)
             {
