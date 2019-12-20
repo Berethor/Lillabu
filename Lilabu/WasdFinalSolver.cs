@@ -24,8 +24,15 @@ namespace Lilabu
             _checker = checker;
 
             var chain = RailwayChain.FromModel(_answer, true);
-            _current2 = _current1 = chain[0];
-            _chain = chain;
+            _current1 = _chain = new Railway(RailwayType.L0);
+            foreach (var railway in chain.GetRailways())
+            {
+                if(railway.IsHead()) continue;
+                _current1.Append(railway);
+                _current1 = _current1.Next;
+            }
+
+            _current1 = _current2 = _chain;
 
             Context = new DrawableContext();
 
@@ -194,16 +201,24 @@ namespace Lilabu
         {
             if (Cursor1Enabled)
             {
-                if (_current1?.Next != null)
+                if (_current1.Next != null)
                 {
                     _current1 = _current1.Next;
+                }
+                else
+                {
+                    _current1 = _chain;
                 }
             }
             if (Cursor2Enabled)
             {
-                if (_current2?.Next != null)
+                if (_current2.Next != null)
                 {
                     _current2 = _current2.Next;
+                }
+                else
+                {
+                    _current2 = _chain;
                 }
             }
         }
@@ -216,12 +231,26 @@ namespace Lilabu
                 {
                     _current1 = _current1.Prev;
                 }
+                else
+                {
+                    while (_current1?.Next != null)
+                    {
+                        _current1 = _current1.Next;
+                    }
+                }
             }
             if (Cursor2Enabled)
             {
                 if (!(_current2 is Railway railway && railway.Type == RailwayType.L0))
                 {
                     _current2 = _current2.Prev;
+                }
+                else
+                {
+                    while (_current2?.Next != null)
+                    {
+                        _current2 = _current2.Next;
+                    }
                 }
             }
         }
