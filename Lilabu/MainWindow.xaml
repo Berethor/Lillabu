@@ -22,8 +22,10 @@
         <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
         <KeyBinding Modifiers="Control" Key="E" Command="{Binding Path=Joystick.LargeNext}" />
         <KeyBinding Modifiers="Control" Key="Q" Command="{Binding Path=Joystick.LargePrev}" />
+        <KeyBinding Key="Z" Command="{Binding Path=Joystick.SyncCursor}" />
+        <KeyBinding Key="X" Command="{Binding Path=Joystick.SwapCursor}" />
         <KeyBinding Key="C" Command="{Binding Path=Joystick.ChangeCursor}" />
-        <KeyBinding Key="X" Command="{Binding Path=Joystick.SyncCursor}" />
+        <KeyBinding Key="V" Command="{Binding Path=Joystick.InsertTemplate}" />
     </Window.InputBindings>
     <Grid Margin="5 5 5 0">
         <Grid.Resources>

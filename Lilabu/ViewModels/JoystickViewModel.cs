@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 
 namespace Lilabu.ViewModels
 {
@@ -18,31 +19,48 @@ namespace Lilabu.ViewModels
         public BaseCommand LargeNext { get; set; }
         public BaseCommand ChangeCursor { get; set; }
         public BaseCommand SyncCursor { get; set; }
+        public BaseCommand SwapCursor { get; set; }
+        public BaseCommand InsertTemplate { get; set; }
 
-        public event EventHandler<JoystickKey> OnKeyPress;
+        public event EventHandler<JoystickEventArg> OnKeyPress;
+
+        public void InvokeKeyPress(object sender, JoystickEventArg e)
+        {
+            OnKeyPress?.Invoke(sender, e);
+        }
 
         public JoystickViewModel()
         {
-            Up = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Up));
-            SmallUp = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallUp));
-            Down = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Down));
-            Left = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Left));
-            SmallLeft = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallLeft));
-            Right = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Right));
-            SmallRight = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallRight));
-            Bridge = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Bridge));
-            Previous = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Previous));
-            LargePrev = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.LargePrev));
-            Next = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Next));
-            LargeNext = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.LargeNext));
-            ChangeCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.ChangeCursor));
-            SyncCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SyncCursor));
+            Up = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Up)));
+            SmallUp = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.SmallUp)));
+            Down = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Down)));
+            Left = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Left)));
+            SmallLeft = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.SmallLeft)));
+            Right = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Right)));
+            SmallRight = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.SmallRight)));
+            Bridge = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Bridge)));
+            Previous = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Previous)));
+            LargePrev = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.LargePrev)));
+            Next = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.Next)));
+            LargeNext = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.LargeNext)));
+            ChangeCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.ChangeCursor)));
+            SyncCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.SyncCursor)));
+            SwapCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, new JoystickEventArg(JoystickKey.SwapCursor)));
+
         }
     }
 
     public struct JoystickEventArg
     {
+        public JoystickEventArg(JoystickKey key)
+        {
+            Key = key;
+            Template = null;
+        }
+
         public JoystickKey Key { get; set; }
+
+        public string Template { get; set; }
     }
 
     public enum JoystickKey
@@ -61,6 +79,8 @@ namespace Lilabu.ViewModels
         LargeNext,
         ChangeCursor,
         SyncCursor,
+        SwapCursor,
+        InsertTemplate,
     }
 
 }

@@ -57,11 +57,17 @@ namespace Lilabu.ViewModels
         public string SelectedSolver
         {
             get => _selectedSolver;
-            set
-            {
+            set {
+
+                // Останавливаем старый алгоритм
+                if (IsRunning) RunCommand?.Execute(null);
+
                 _selectedSolver = value;
                 Configuration.LastSolver = value;
                 Configuration.Save();
+
+                // Запускаем новый алгоритм
+                RunCommand?.Execute(null);
             }
         }
 
@@ -202,14 +208,35 @@ namespace Lilabu.ViewModels
         /// <summary>
         ///  Конструктор по-умолчанию
         /// </summary>
-        public MainViewModel()
+        public MainViewModel(Window mainWindow = null)
         {
             Title = "Lilabu Application";
 
             RunText = "Запустить";
 
             Joystick = new JoystickViewModel();
-            
+            Joystick.InsertTemplate = new BaseCommand(() =>
+            {
+                var window = new InputTemplateWindow
+                {
+                    Owner = mainWindow, 
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+
+                window.OnResult += (_, text) =>
+                {
+                    var args = new JoystickEventArg(JoystickKey.InsertTemplate)
+                    {
+                        Template = text,
+                    };
+
+                    Joystick.InvokeKeyPress(Joystick, args);
+                };
+
+                window.Show();
+                window.TextBoxTemplate.Focus();
+            });
+
             Configuration = new MainConfiguration().Load();
 
             _solvers = new IFinalTaskSolver[]

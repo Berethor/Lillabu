@@ -53,8 +53,11 @@ namespace Lilabu
                                  "Shift+W: L1\n" +
                                  "Shift+A: T4L\n" +
                                  "Shift+D: T4R\n" +
-                                 "C: Curs mode\n" +
-                                 "X: Sync curs";
+                                 "Z: Sync curs\n" +
+                                 "X: Swap curs\n" +
+                                 "C: Change mode\n" +
+                                 "V: Insert tmpl\n" +
+                                 "";
 
             SendAnswer();
 
@@ -98,11 +101,11 @@ namespace Lilabu
         private Model _answer;
         private Model _model;
 
-        private void Joystick_OnKeyPress(object sender, JoystickKey key)
+        private void Joystick_OnKeyPress(object sender, JoystickEventArg e)
         {
-            Context.ErrorMessage = null;
+            Context.ErrorMessage = (_answer == null) ? "Алгоритм не запущен" : null;
 
-            switch (key)
+            switch (e.Key)
             {
                 case JoystickKey.Up: Add("L3"); break;
                 case JoystickKey.SmallUp: Add("L1"); break;
@@ -118,6 +121,8 @@ namespace Lilabu
                 case JoystickKey.LargePrev: for (var i = 0; i < 10; i++) Prev(); break;
                 case JoystickKey.ChangeCursor: ChangeCursor(); break;
                 case JoystickKey.SyncCursor: SyncCursor(); break;
+                case JoystickKey.SwapCursor: SwapCursor(); break;
+                case JoystickKey.InsertTemplate: InsertTemplate(e.Template); break;
             }
 
             SendAnswer();
@@ -164,37 +169,30 @@ namespace Lilabu
         {
             if (Cursor1Enabled)
             {
-                if (!(_current1 is Railway railway && railway.Type == RailwayType.L0))
-                {
-                    // Возвращаем блоки в список доступных
-                    _current1.ReturnBlocksToModel(_answer);
-
-                    if (_current1.Prev != null) _current1.Prev.Next = _current1.Next;
-                    if (_current1.Next != null)
-                    {
-                        _current1.Next.Prev = _current1.Prev;
-                        _current1.Next.Start = _current1.Prev?.End ?? Point.Zero;
-                    }
-
-                    _current1 = _current1.Prev;
-                }
+                RemoveAt(_current1);
             }
             if (Cursor2Enabled)
             {
-                if (!(_current2 is Railway railway && railway.Type == RailwayType.L0))
+                RemoveAt(_current2);
+            }
+        }
+
+        private void RemoveAt(IRailwayTemplate cursor)
+        {
+            if (!(cursor is Railway railway && railway.Type == RailwayType.L0))
+            {
+                // Возвращаем блоки в список доступных
+                cursor.ReturnBlocksToModel(_answer);
+
+                if (cursor.Prev != null) cursor.Prev.Next = cursor.Next;
+                if (cursor.Next != null)
                 {
-                    // Возвращаем блоки в список доступных
-                    _current2.ReturnBlocksToModel(_answer);
-
-                    if (_current2.Prev != null) _current2.Prev.Next = _current2.Next;
-                    if (_current2.Next != null)
-                    {
-                        _current2.Next.Prev = _current2.Prev;
-                        _current2.Next.Start = _current2.Prev?.End ?? Point.Zero;
-                    }
-
-                    _current2 = _current2.Prev;
+                    cursor.Next.Prev = cursor.Prev;
+                    cursor.Next.Start = cursor.Prev?.End ?? Point.Zero;
                 }
+
+                if (cursor == _current1) _current1 = cursor.Prev;
+                else if (cursor == _current2) _current2 = cursor.Prev;
             }
         }
 
@@ -236,6 +234,8 @@ namespace Lilabu
 
         private void SendAnswer()
         {
+            if (_answer == null) return;
+
             _answer = _chain.ConvertToModel(_answer);
 
             var p1 = _current1.End;
@@ -273,6 +273,72 @@ namespace Lilabu
             }
         }
 
+        private void SwapCursor()
+        {
+            var temp = _current1;
+            _current1 = _current2;
+            _current2 = temp;
+            
+            //if (_cursorMode == 0) _cursorMode = 1;
+            //else if (_cursorMode == 1) _cursorMode = 0;
+        }
+
+        private void InsertTemplate(string blueprint)
+        {
+            if (blueprint == null)
+            {
+                Context.ErrorMessage = "Не удалось добавить шаблон";
+
+                return;
+            }
+
+            var p = _current1;
+
+            while (p != _current2)
+            {
+                p = p?.Next;
+
+                if (p == null || (p is Railway railway && railway.Type == RailwayType.L0))
+                {
+                    Context.ErrorMessage = "Не удалось обнаружить второй курсор дальше по направлению трассы";
+                    
+                    return;
+                }
+            }
+
+            if (RailwayFactory.Default.TryBuildTemplate(out var template, out var error, blueprint, _answer))
+            {
+                // Проверяем, что новая трасса подходит
+                // TODO
+
+                // Удаляем старую трассу между курсорами
+                while (_current2 != _current1)
+                {
+                    RemoveAt(_current2);
+
+                    if (_current2 is Railway railway && railway.Type == RailwayType.L0)
+                    {
+                        // Возвращаем блоки
+                        template.ReturnBlocksToModel(_answer);
+
+                        Context.ErrorMessage = "При удалении старого участка трассы возникла ошибка";
+                        
+                        return;
+                    }
+                }
+
+                // Добавляем новую трасса 
+                foreach (var railway in template.GetRailways())
+                {
+                    _current2.Append(railway);
+                    _current2 = _current2.Next;
+                }
+            }
+            else
+            {
+                Context.ErrorMessage = error;
+            }
+        }
 
         #region Implementation of IDrawableContextProvider
 

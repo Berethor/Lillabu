@@ -1,0 +1,66 @@
+﻿<Window x:Class="Lilabu.InputTemplateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Lilabu"
+        xmlns:viewModels="clr-namespace:Lilabu.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewModels:InputTemplateViewModel}"
+        mc:Ignorable="d"
+        Title="Вставить шаблон"
+        SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" ResizeMode="NoResize">
+    <Window.InputBindings>
+        <KeyBinding Key="Enter" Command="{Binding Path=Ok}" />
+        <KeyBinding Key="Escape" Command="{Binding Path=Canсel}" />
+
+        <KeyBinding Key="W" Command="{Binding Path=Joystick.Up}" />
+        <KeyBinding Key="S" Command="{Binding Path=Joystick.Down}" />
+        <KeyBinding Key="A" Command="{Binding Path=Joystick.Left}" />
+        <KeyBinding Key="D" Command="{Binding Path=Joystick.Right}" />
+        <KeyBinding Key="B" Command="{Binding Path=Joystick.Bridge}" />
+        <KeyBinding Modifiers="Shift" Key="W" Command="{Binding Path=Joystick.SmallUp}" />
+        <KeyBinding Modifiers="Shift" Key="A" Command="{Binding Path=Joystick.SmallLeft}" />
+        <KeyBinding Modifiers="Shift" Key="D" Command="{Binding Path=Joystick.SmallRight}" />
+        <KeyBinding Key="E" Command="{Binding Path=Joystick.Next}" />
+        <KeyBinding Key="Q" Command="{Binding Path=Joystick.Previous}" />
+        <KeyBinding Modifiers="Control" Key="E" Command="{Binding Path=Joystick.LargeNext}" />
+        <KeyBinding Modifiers="Control" Key="Q" Command="{Binding Path=Joystick.LargePrev}" />
+    </Window.InputBindings>
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="5 2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="5 0"/>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.ColumnSpan="2">
+            1. Установите два курсора так,<LineBreak/>
+            чтобы 2-й курсор был дальше 1-го<LineBreak/>
+            (X - поменять курсоры местами)<LineBreak/>
+            2. Введите подходящий шаблон:
+        </TextBlock>
+        <TextBox Text="{Binding Path=InputText}" x:Name="TextBoxTemplate" Grid.Row="1" Grid.ColumnSpan="2"/>
+        <TextBlock  Grid.Row="2" Text="Например: L1L2L3L4T4t4T8t8B1" Grid.ColumnSpan="2"/>
+        <Button Grid.Row="3" Grid.Column="0" Content="Ок"  Command="{Binding Path=Ok}"/>
+        <Button Grid.Row="3" Grid.Column="1" Content="Отмена" Command="{Binding Path=Canсel}"/>
+    </Grid>
+</Window>
