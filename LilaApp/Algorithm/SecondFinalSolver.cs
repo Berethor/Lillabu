@@ -99,6 +99,8 @@ namespace LilaApp.Algorithm
             _newTopology = (_answer.Topology.Select(item => new TopologyItem(item))).ToList();
             topology = _newTopology;
             order = _newOrder;
+            _newOrder = new List<string>(_answer.Order);
+            _newTopology = (_answer.Topology.Select(item => new TopologyItem(item))).ToList();
             OnStepEvent.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
             double minLength = double.MaxValue;
