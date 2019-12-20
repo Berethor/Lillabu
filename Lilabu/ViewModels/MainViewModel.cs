@@ -259,6 +259,7 @@ namespace Lilabu.ViewModels
                 new ThirdFinalSolver(),
                 new WasdFinalSolver(Joystick), 
                 new GeneticFinalSolver(), 
+                new AmplifierFinalSolver(), 
             };
 
             SelectedSolver = Configuration?.LastSolver ?? _solvers[1].GetType().Name;
