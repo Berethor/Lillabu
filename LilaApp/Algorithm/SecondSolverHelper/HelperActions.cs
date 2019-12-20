@@ -130,6 +130,7 @@ namespace LilaApp.Algorithm.SecondSolverHelper
                             {
                                 angle += 45;
                                 blocks.Add(block.Name);
+                                blocks.Add(block.Name);
                                 block.Count -= 2;
                             }
                             break;
