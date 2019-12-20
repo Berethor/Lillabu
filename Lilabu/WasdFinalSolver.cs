@@ -43,17 +43,18 @@ namespace Lilabu
             _current2 = _current1;
 
             Context.BotsRating = "Управление:\n" +
-                                 "W = Add L3\n" +
-                                 "A = Add 2xT4L\n" +
-                                 "S = Remove\n" +
-                                 "D = Add 2xT4R\n" +
-                                 "B = Add Bridge\n" +
-                                 "Q = Prev item\n" +
-                                 "E = Next item\n" +
-                                 "Shift+W = L1\n" +
-                                 "Shift+A = T4L\n" +
-                                 "Shift+D = T4R\n" +
-                                 "C = Cursors";
+                                 "W: Add L3\n" +
+                                 "A: Add 2xT4L\n" +
+                                 "S: Remove\n" +
+                                 "D: Add 2xT4R\n" +
+                                 "B: Add Bridge\n" +
+                                 "Q: Prev item\n" +
+                                 "E: Next item\n" +
+                                 "Shift+W: L1\n" +
+                                 "Shift+A: T4L\n" +
+                                 "Shift+D: T4R\n" +
+                                 "C: Curs mode\n" +
+                                 "X: Sync curs";
 
             SendAnswer();
 
@@ -64,7 +65,7 @@ namespace Lilabu
 
             _answer.Blocks.Clear();
             _answer.Blocks.AddRange(_model.Blocks);
-            
+
             Context = new DrawableContext();
             SendAnswer();
 
@@ -97,11 +98,11 @@ namespace Lilabu
         private Model _answer;
         private Model _model;
 
-        private void Joystick_OnKeyPress(object sender, JoystickEventArg e)
+        private void Joystick_OnKeyPress(object sender, JoystickKey key)
         {
             Context.ErrorMessage = null;
 
-            switch (e.Key)
+            switch (key)
             {
                 case JoystickKey.Up: Add("L3"); break;
                 case JoystickKey.SmallUp: Add("L1"); break;
@@ -112,8 +113,11 @@ namespace Lilabu
                 case JoystickKey.SmallRight: Add("T4"); break;
                 case JoystickKey.Bridge: Add("B1"); break;
                 case JoystickKey.Next: Next(); break;
+                case JoystickKey.LargeNext: for (var i = 0; i < 10; i++) Next(); break;
                 case JoystickKey.Previous: Prev(); break;
+                case JoystickKey.LargePrev: for (var i = 0; i < 10; i++) Prev(); break;
                 case JoystickKey.ChangeCursor: ChangeCursor(); break;
+                case JoystickKey.SyncCursor: SyncCursor(); break;
             }
 
             SendAnswer();
@@ -233,19 +237,19 @@ namespace Lilabu
         private void SendAnswer()
         {
             _answer = _chain.ConvertToModel(_answer);
-            
+
             var p1 = _current1.End;
             Context.Cursor1Point = new Point(p1.X, p1.Y, p1.Angle, Cursor1Enabled ? 1 : 0);
 
             var p2 = _current2.End;
             Context.Cursor2Point = new Point(p2.X, p2.Y, p2.Angle, Cursor2Enabled ? 1 : 0);
-            
+
             OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
         }
 
         private void ChangeCursor()
         {
-            _cursorMode = (_cursorMode + 1) % 3; 
+            _cursorMode = (_cursorMode + 1) % 3;
 
             var p1 = Context.Cursor1Point;
             Context.Cursor1Point = new Point(p1.X, p1.Y, p1.Angle, Cursor1Enabled ? 1 : 0);
@@ -256,6 +260,19 @@ namespace Lilabu
 
         private bool Cursor1Enabled => _cursorMode == 0 || _cursorMode == 2;
         private bool Cursor2Enabled => _cursorMode == 1 || _cursorMode == 2;
+
+        private void SyncCursor()
+        {
+            if (Cursor1Enabled)
+            {
+                _current2 = _current1;
+            }
+            else
+            {
+                _current1 = _current2;
+            }
+        }
+
 
         #region Implementation of IDrawableContextProvider
 

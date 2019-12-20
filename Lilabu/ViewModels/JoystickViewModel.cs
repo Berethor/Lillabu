@@ -13,67 +13,30 @@ namespace Lilabu.ViewModels
         public BaseCommand SmallRight { get; set; }
         public BaseCommand Bridge { get; set; }
         public BaseCommand Previous { get; set; }
+        public BaseCommand LargePrev { get; set; }
         public BaseCommand Next { get; set; }
+        public BaseCommand LargeNext { get; set; }
         public BaseCommand ChangeCursor { get; set; }
+        public BaseCommand SyncCursor { get; set; }
 
-        public event EventHandler<JoystickEventArg> OnKeyPress;
+        public event EventHandler<JoystickKey> OnKeyPress;
 
         public JoystickViewModel()
         {
-            Up = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Up });
-            });
-
-            SmallUp = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallUp });
-            });
-
-            Down = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Down });
-            });
-
-            Left = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Left });
-            });
-
-            SmallLeft = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallLeft });
-            });
-
-            Right = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Right });
-            });
-
-            SmallRight = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.SmallRight });
-            });
-
-            Bridge = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Bridge });
-            });
-
-            Previous = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Previous });
-            });
-
-            Next = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.Next });
-            });
-
-            ChangeCursor = new BaseCommand(() =>
-            {
-                OnKeyPress?.Invoke(this, new JoystickEventArg { Key = JoystickKey.ChangeCursor });
-            });
+            Up = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Up));
+            SmallUp = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallUp));
+            Down = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Down));
+            Left = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Left));
+            SmallLeft = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallLeft));
+            Right = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Right));
+            SmallRight = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SmallRight));
+            Bridge = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Bridge));
+            Previous = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Previous));
+            LargePrev = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.LargePrev));
+            Next = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.Next));
+            LargeNext = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.LargeNext));
+            ChangeCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.ChangeCursor));
+            SyncCursor = new BaseCommand(() => OnKeyPress?.Invoke(this, JoystickKey.SyncCursor));
         }
     }
 
@@ -93,8 +56,11 @@ namespace Lilabu.ViewModels
         SmallRight,
         Bridge,
         Previous,
+        LargePrev,
         Next,
+        LargeNext,
         ChangeCursor,
+        SyncCursor,
     }
 
 }
