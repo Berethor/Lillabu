@@ -29,6 +29,7 @@ namespace Lilabu
             {
                 if(railway.IsHead()) continue;
                 _current1.Append(railway);
+                _current1 = _current1.Next;
             }
 
             _current1 = _current2 = _chain;
