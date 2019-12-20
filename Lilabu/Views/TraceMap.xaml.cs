@@ -219,26 +219,33 @@ namespace Lilabu.Views
                     AddEllipse(points[i], Brushes.Red, 0.2);
                 }
 
-                // Точки маршрута
-
-                foreach (var route in MainVM.Model.Points)
+                void AddText(string text, Point p, double fontSize = 7, Brush color = null)
                 {
-                    AddEllipse(route, Brushes.Blue);
 
-                    var x1 = padding + multiplier * (route.X - minPoint.X);
-                    var y1 = padding + multiplier * (route.Y - minPoint.Y);
-                    
-                    // Стоимость точек
+                    var x1 = padding + multiplier * (p.X - minPoint.X);
+                    var y1 = padding + multiplier * (p.Y - minPoint.Y);
+
                     var textBox = new TextBlock()
                     {
-                        FontSize = 8,
-                        Text = $"{route.Price:F0}",
+                        Text = text,
+                        FontSize = fontSize,
+                        Foreground =  color ?? Brushes.Black,
                         LayoutTransform = new ScaleTransform(1, -1),
                         Margin = new Thickness(x1, y1, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
                     };
                     grid_Map.Children.Add(textBox);
+                }
+
+                // Точки маршрута
+
+                foreach (var route in MainVM.Model.Points)
+                {
+                    AddEllipse(route, Brushes.Blue);
+
+                    // Стоимость точек
+                   AddText($"{route.Price:F0}", route);
                 }
 
                 // Второй курсор
@@ -249,6 +256,8 @@ namespace Lilabu.Views
                         : Brushes.Transparent;
 
                     AddTriangle(cursorPoint2, fill, Brushes.BlueViolet);
+
+                    AddText($"x:{cursorPoint2.X:F0} y:{cursorPoint2.Y:F0}\n", cursorPoint2, 5);
                 }
                 // Основной курсор алгоритма WASD
                 if (VM.Cursor1Point is Point cursorPoint)
@@ -258,8 +267,8 @@ namespace Lilabu.Views
                         : Brushes.Transparent;
 
                     AddTriangle(cursorPoint, fill, Brushes.Green);
+                    AddText($"x:{cursorPoint.X:F0} y:{cursorPoint.Y:F0}\n", cursorPoint, 5);
                 }
-
             }
         }
 
