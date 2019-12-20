@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using LilaApp.Models;
 using LilaApp.Models.Railways;
 
@@ -15,9 +16,9 @@ namespace LilaApp.Algorithm.Genetic
         /// <summary>
         /// Решить обратную задачу
         /// </summary>
-        /// <param name="model">Неполная модель исходных данных (только блоки DATA и ROUTE)</param>
-        /// <param name="directTaskSolver">Решатель прямой задачи - для вычисления стоимости</param>
-        /// <returns>Полная модель (включая блоки ORDER и TOP)</returns>
+        /// <param name="model">Неполная модель исходных данных (только блоки DATA и ROUTE)</param> расшириться
+        /// <param name="directTaskSolver">Алгоритм решения прямой задачи - для вычисления стоимости</param>
+        /// <returns>Полная модель</returns> 
         public FinalAnswer Solve(Model model, IDirectTaskSolver directTaskSolver)
         {
             _model = Model.Copy(model);
@@ -40,7 +41,7 @@ namespace LilaApp.Algorithm.Genetic
         public CancellationToken Token { get; set; }
 
         /// <summary>
-        /// Событие для отрисовки каждого шага в процессе решения
+        /// Событие для отображения каждого шага в процессе решения
         /// </summary>
         public event EventHandler<FinalAnswer> OnStepEvent;
 
@@ -58,7 +59,7 @@ namespace LilaApp.Algorithm.Genetic
 
                 for (var j = 0; j < bot.Dna.Length; j++)
                 {
-                    bot.Dna[j] = _random.Next(bot.Dna.Length);
+                    bot.Dna[j] = BotCommandExtension.GetRandomCommand();
                 }
 
                 Bots.Add(bot);
@@ -105,8 +106,15 @@ namespace LilaApp.Algorithm.Genetic
                 // Вероятностная мутация
                 if (_random.Next(100) <= 35)
                 {
-                    var k = _random.Next(child.Dna.Length);
-                    child.Dna[k] = _random.Next(child.Dna.Length);
+                    // Количество ячеек мутации 
+                    var mutationsCount = _random.Next(1, child.Dna.Length / 8);
+
+                    for (var j = 0; j < mutationsCount; j++)
+                    {
+                        var k = _random.Next(child.Dna.Length);
+                        child.Dna[k] = BotCommandExtension.GetRandomCommand();
+                    }
+
                     child.IsMutant = true;
                 }
 
@@ -145,7 +153,7 @@ namespace LilaApp.Algorithm.Genetic
                     continue;
                 }
 
-                for (var i = 0; i < Bots.Count; i++)
+                for(var i = 0; i < Bots.Count; i++)
                 {
                     var bot = Bots[i];
 
@@ -160,6 +168,13 @@ namespace LilaApp.Algorithm.Genetic
 
                     var answer = bot.Root.ConvertToModel(bot.Current.Model);
                     var price = _checker.Solve(answer);
+                    var trace = TraceBuilder.CalculateTrace(answer);
+
+                    if (trace.Exceptions.Any() || 
+                        price.Result < -1000) // TODO: const MIN_PRICE
+                    {
+                        bot.IsDead = true;
+                    }
 
                     if (Math.Abs(price.Result - bot.Current.Price.Result) < Constants.Precision)
                     {
@@ -176,6 +191,8 @@ namespace LilaApp.Algorithm.Genetic
                     }
 
                     bot.Current = new FinalAnswer(answer, price);
+
+                    //OnStepEvent?.Invoke(this, bot.Current);
 
                     if (price > bot.Best.Price)
                     {
@@ -196,47 +213,74 @@ namespace LilaApp.Algorithm.Genetic
             }
         }
 
+        private readonly string[] _lineBlocks = new[] { "L1", "L2", "L3", "L4" };
+
         void ExecuteCommand(Bot bot)
         {
-
-            if (!_factory.TryBuildTemplate(out var l1, out var error, "L1", bot.Current.Model))
+            for (var k = 0; k < 10; k++) // 10 попыток
             {
-                bot.IsDead = true;
+                var command = bot.Dna[bot.Cur];
 
-                return;
-            }
-
-            for (var k = 0; k < 10; k++)
-            {
-                switch (bot.Dna[bot.Cur])
+                if (command.IsScale()) //  Расширение
                 {
-                    //case 1: bot.Prev(); return;
-                    //case 2: bot.Next(); return;
-                    //case 3: bot.Enter(); return;
-                    //case 4: bot.Exit(); return;
-                    case 5: bot.TryScale(Direction.N, l1); return;
-                    case 6: bot.TryScale(Direction.S, l1); return;
-                    case 7: bot.TryScale(Direction.W, l1); return;
-                    case 8: bot.TryScale(Direction.E, l1); return;
+                    var blueprint = command.ExtractRailwayType();
 
-                    case 9:
-                        var blueprint = RailwayTemplates.Library[_random.Next(RailwayTemplates.Library.Count)];
-                        if (_factory.TryBuildTemplate(out var template, out error, blueprint, bot.Current.Model))
-                        {
-                            bot.TryMutate(template);
-                        }
-                        break;
+                    if (blueprint == null)
+                    {
+                        blueprint = _lineBlocks[_random.Next(_lineBlocks.Length)];
+                    }
 
-                    default: bot.Cur = _random.Next(bot.Dna.Length); break;
+                    if (!_factory.TryBuildTemplate(out var template, out var error, blueprint, bot.Current.Model))
+                    {
+                        continue;
+                    }
+
+                    var direction = command.ExtractDirection() ?? Direction.S;
+
+                    if (!bot.TryScale(direction, template))
+                    {
+                        template.ReturnBlocksToModel(bot.Current.Model);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else if (command.IsMutate()) // Мутация
+                {
+                    var blueprint = RailwayTemplates.Library[_random.Next(RailwayTemplates.Library.Count)];
+
+                    if (!_factory.TryBuildTemplate(out var template, out var error, blueprint, bot.Current.Model))
+                    {
+                        continue;
+                    }
+
+                    if (!bot.TryMutate(template))
+                    {
+                        template.ReturnBlocksToModel(bot.Current.Model);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    bot.Cur += (byte) command;
+
+                    break;
                 }
             }
+
+            // TODO: возможно стоит иногда оставлять бота в живых
+            bot.IsDead = true;
         }
 
         #region Implementation of IDrawableContextProvider
 
         public DrawableContext Context {
             get {
-                var text = new StringBuilder($"Generation {Generation} (Iter: {Iteration})\n");
+                var text = new StringBuilder($"Generation {Generation} (Iteration: {Iteration})\n");
                 text.Append($"THE BEST ANSWER: {Best.Price.Result:F2}\n");
 
                 var sumCur = 0.0;
@@ -246,7 +290,7 @@ namespace LilaApp.Algorithm.Genetic
                     var bot = Bots[i];
                     var dead = bot.IsDead ? 'D' : '-';
                     var mutant = bot.IsMutant ? 'M' : '-';
-                    text.Append($"{i}.{mutant} {bot.Current.Price.Result:F2} Best: {bot.Best.Price.Result:F2} \n");
+                    text.Append($"{i}.{dead}{mutant} {bot.Current.Price.Result:F2} Best: {bot.Best.Price.Result:F2} \n");
 
                     sumCur += bot.Current.Price.Result;
                     sumBest += bot.Best.Price.Result;
@@ -268,108 +312,5 @@ namespace LilaApp.Algorithm.Genetic
     }
 
     #endregion
-}
-
-public class Bot
-{
-    private int _cur;
-
-    public int Cur { get => _cur; set => _cur = Math.Max(0, Math.Min(Dna.Length - 1, value)); }
-
-    public int DeadLoops { get; set; }
-
-    public bool IsDead { get; set; }
-
-    public bool IsMutant { get; set; }
-
-    public int[] Dna { get; set; } = new int[16];
-
-    public RailwayChain Root { get; set; }
-
-    public IRailwayTemplate Pointer { get; set; }
-
-    public Stack<IRailwayTemplate> ParentStack { get; } = new Stack<IRailwayTemplate>();
-
-    public FinalAnswer Current { get; set; }
-
-    public FinalAnswer Best { get; set; }
-
-    public Bot(Model initial, TracePrice tracePrice)
-    {
-        Current = new FinalAnswer(Model.Copy(initial), tracePrice);
-        Best = new FinalAnswer(Model.Copy(initial), tracePrice);
-
-        Root = RailwayTemplates.CreateCircle(RailwayType.T4R, Current.Model);
-        Pointer = Root;
-    }
-
-    public bool Prev()
-    {
-        if (Pointer.Prev != null)
-        {
-            Pointer = Pointer.Prev;
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool Next()
-    {
-        if (Pointer.Next != null)
-        {
-            Pointer = Pointer.Next;
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool Enter()
-    {
-        if (Pointer is RailwayChain chain)
-        {
-            ParentStack.Push(Pointer);
-            Pointer = chain[0];
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool Exit()
-    {
-        if (ParentStack.Count > 0)
-        {
-            Pointer = ParentStack.Pop();
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool TryScale(Direction direction, IRailwayTemplate template = null)
-    {
-        if (Pointer is RailwayChain chain)
-        {
-            return chain.TryScale(direction, template);
-        }
-
-        return false;
-    }
-
-    public bool TryMutate(IRailwayTemplate template)
-    {
-        if (Pointer is RailwayChain chain)
-        {
-            return chain.TryMutate(template);
-        }
-
-        return false;
-    }
 }
 
