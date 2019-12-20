@@ -94,9 +94,14 @@ namespace LilaApp.Algorithm.SecondSolverHelper
             foreach (var block in sortedTurnBlocks)
             {
                 var blockAngle = int.Parse(block.Name[1].ToString());
-
+                int tries = 0;
                 while (angle < 90)
                 {
+                    if (tries == 10)
+                    {
+                        break;
+                    }
+
                     if (block.Count < 1)
                     {
                         break;
@@ -121,23 +126,26 @@ namespace LilaApp.Algorithm.SecondSolverHelper
                             }
                             break;
                         case (8):
-                            if (angle + 22.5 <= turnAngle)
+                            if (block.Count > 1 && angle + 45 <= turnAngle)
                             {
-                                angle += 22.5;
+                                angle += 45;
                                 blocks.Add(block.Name);
-                                block.Count--;
+                                block.Count -= 2;
                             }
                             break;
                     }
+
+                    tries++;
                 }
             }
-            if(angle != 90)
+
+            if (angle != 90)
             {
                 throw new Exception("Не хватает элементов");
             }
             return blocks;
         }
-        public static List<string> GetStraightElements(List<Block> sortedStraightBlocks, int length)
+        public static List<string> GetStraightElements(ref List<Block> sortedStraightBlocks, int length)
         {
             int currentLength = 0;
             List<string> blocks = new List<string>();
@@ -175,7 +183,7 @@ namespace LilaApp.Algorithm.SecondSolverHelper
 
                 startI++;
 
-                if(currentLength == 0)
+                if (currentLength == 0)
                 {
                     return blocks;
                 }

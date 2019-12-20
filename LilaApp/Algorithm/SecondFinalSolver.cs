@@ -169,8 +169,6 @@ namespace LilaApp.Algorithm
                     pointsCopy = pointsCopy.Where(a => !a.Equals(_previousPoint)).ToList();
                     _answer.Order = _newOrder;
                     _answer.Topology = _newTopology;
-                    sortedStraightBlocks = _newStraightBlocks;
-                    sortedTurnBlocks = _newTurnBlocks;
                     OnStepEvent.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
                     continue;
                 }
@@ -181,7 +179,7 @@ namespace LilaApp.Algorithm
                         .Where(action => action.command == expand.side && action.action)
                         .Select(action => action))
                     {
-                        AddElement(detailName, action.Item2, out pointShift, order, topology, blocks);
+                        AddElement(detailName, action.Item2, out pointShift, order, topology, sortedStraightBlocks);
                         UpdateSides(pointShift, sides, sides.IndexOf(action.Item2), action.Item2.SideEndIndex);
                         return true;
                     }
@@ -208,11 +206,11 @@ namespace LilaApp.Algorithm
                             {
                                 if (i == sides.Count - 1)
                                 {
-                                    trace = addReverse(blocks, sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i - 1].EndIndex, ref pointsCopy);
+                                    trace = addReverse(blocks,ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i - 1].EndIndex, ref pointsCopy);
                                 }
                                 else
                                 {
-                                    trace = addReverse(blocks, sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i].EndIndex, ref pointsCopy);
+                                    trace = addReverse(blocks,ref sortedStraightBlocks, sortedTurnBlocks, order, topology, sides, sides[i].Turn, trace, sides[i].EndIndex, ref pointsCopy);
                                 }
                                 break;
                             }
@@ -260,10 +258,6 @@ namespace LilaApp.Algorithm
                 {
                     traceIncome = newTraceIncome;
                     _newOrder = new List<string>(order);
-                    _newStraightBlocks = (sortedStraightBlocks
-                        .Select(item => new Block(item.Name, item.Count, item.Price))).ToList();
-                    _newTurnBlocks = (sortedTurnBlocks
-                        .Select(item => new Block(item.Name, item.Count, item.Price))).ToList();
                     _newTopology = (topology.Select(item => new TopologyItem(item))).ToList();
                     continue;
                 }
@@ -288,14 +282,14 @@ namespace LilaApp.Algorithm
         /// <param name="index">Номер блока в ордере для вставки шаблона</param>
         /// <returns></returns>
         private TraceBuilder.Result addReverse(
-            List<Block> blocks, List<Block> sortedStraightElements,
+            List<Block> blocks, ref List<Block> sortedStraightElements,
             List<Block> sortedTurnElements, List<string> order,
             List<TopologyItem> topology, List<RouteSide> sides,
             int turn, TraceBuilder.Result trace, int index,
             ref List<Point> pointsCopy)
         {
             if (blocks.Find(_ => _.Name.StartsWith("B"))?.Count > 0 
-                && sortedStraightElements.Find(_ =>_.Name == "L1").Count > 2)
+                && sortedStraightElements.Find(_ =>_.Name == "L1")?.Count > 2)
             {
                 var startIndex = index;
                 var angle = trace.Points[index].Angle;
@@ -335,24 +329,24 @@ namespace LilaApp.Algorithm
                 int insertIndex = sideIndex + 1;
                 try
                 {
-                    AddReverseSide(sortedStraightElements, sortedTurnElements,
+                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
                         order, topology, sides, turn * -1, out trace, ref index,
                         insertIndex, 6);
                     ///
                     insertIndex++;
-                    AddReverseSide(sortedStraightElements, sortedTurnElements,
+                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
                         order, topology, sides, turn * -1, out trace, ref index,
                         insertIndex, 0);
 
                     insertIndex++;
 
-                    AddReverseSide(sortedStraightElements, sortedTurnElements,
+                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
                         order, topology, sides, turn * -1, out trace, ref index,
                         insertIndex, 0);
 
                     insertIndex++;
 
-                    AddReverseSide(sortedStraightElements, sortedTurnElements,
+                    AddReverseSide(ref sortedStraightElements, sortedTurnElements,
                         order, topology, sides, turn * -1, out trace, ref index,
                         insertIndex, -1);
 
@@ -428,7 +422,7 @@ namespace LilaApp.Algorithm
                             sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex], false));
                             sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex + 1], true));
                             sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 2], false));
-                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], false));
 
                             break;
                         // вправо вверх
@@ -451,7 +445,7 @@ namespace LilaApp.Algorithm
                             sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 1], true));
                             sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex], false));
                             sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex], false));
-                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], false));
 
                             break;
                         // вправо вниз
@@ -505,59 +499,59 @@ namespace LilaApp.Algorithm
                             sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
                             sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex], false));
 
-                            ChangeSidePointer(sides, insertIndex, "Right");
-                            ChangeSidePointer(sides, insertIndex, "Up");
+                            //ChangeSidePointer(sides, insertIndex, "Right");
+                            //ChangeSidePointer(sides, insertIndex, "Up");
 
                             break;
-                        // влево вниз
+                        // влево вверх
                         case (Math.PI / 2):
                             sides[insertIndex].actions.Add(("Up", sides[insertIndex + 2], false));
-                            sides[insertIndex].actions.Add(("Down", sides[insertIndex + 1], false));
-                            sides[insertIndex].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 2], false));
                             sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], true));
 
-                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 2], false));
-                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], true));
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 2], true));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex], false));
                             sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex], false));
                             sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
 
                             sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 2], false));
                             sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex + 1], false));
-                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex], false));
-                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex], true));
-
-                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 2], false));
-                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex + 1], true));
-                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex], false));
-                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], true));
-
-                            ChangeSidePointer(sides, insertIndex, "Left");
-                            ChangeSidePointer(sides, insertIndex, "Left");
-                            break;
-                        // вверх влево
-                        case (3 * Math.PI / 2):
-                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 1], false));
-                            sides[insertIndex].actions.Add(("Down", sides[insertIndex], false));
-                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 2], false));
-                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], true));
-
-                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 3], true));
-                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex], false));
-                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 2], false));
-                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
-
-                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 1], false));
-                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex], false));
-                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 2], true));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 2], false));
                             sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex], true));
 
                             sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 1], true));
                             sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex], false));
                             sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 2], false));
-                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex], true));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], false));
 
-                            ChangeSidePointer(sides, insertIndex, "Left");
-                            ChangeSidePointer(sides, insertIndex, "Up");
+                            //ChangeSidePointer(sides, insertIndex, "Left");
+                            //ChangeSidePointer(sides, insertIndex, "Left");
+                            break;
+                        // вправо вниз+
+                        case (3 * Math.PI / 2):
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 2], true));
+                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], false));
+
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 2], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
+
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 1], false));
+                            sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex], true));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex + 2], false));
+
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex + 1], true));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 2], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex], false));
+
+                            //ChangeSidePointer(sides, insertIndex, "Left");
+                            //ChangeSidePointer(sides, insertIndex, "Up");
                             break;
                         // вправо вниз
                         case (Math.PI):
@@ -581,8 +575,8 @@ namespace LilaApp.Algorithm
                             sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
                             sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], false));
 
-                            ChangeSidePointer(sides, insertIndex, "Right");
-                            ChangeSidePointer(sides, insertIndex, "Down");
+                            //ChangeSidePointer(sides, insertIndex, "Right");
+                            //ChangeSidePointer(sides, insertIndex, "Down");
                             break;
                     }
                 }
@@ -615,7 +609,7 @@ namespace LilaApp.Algorithm
             return trace;
         }
 
-        private void AddReverseSide(List<Block> sortedStraightElements,
+        private void AddReverseSide(ref List<Block> sortedStraightElements,
             List<Block> sortedTurnElements, List<string> order,
             List<TopologyItem> topology, List<RouteSide> sides,
             int turn, out TraceBuilder.Result trace, ref int index,
@@ -640,7 +634,7 @@ namespace LilaApp.Algorithm
             }
             else
             {
-                firstSide = HelperActions.GetStraightElements(sortedStraightElements, staightLength);
+                firstSide = HelperActions.GetStraightElements(ref sortedStraightElements, staightLength);
                 firstTurn = firstSide.Concat(HelperActions.GetTurnElements(sortedTurnElements)).ToList();
             }
 
@@ -707,7 +701,6 @@ namespace LilaApp.Algorithm
             }
             return false;
         }
-
         private static string GetDetail((string side, int length) expand, List<Block> directBlocks)
         {
             string detailName = string.Empty;
@@ -734,9 +727,13 @@ namespace LilaApp.Algorithm
         private static void AddElement(string name, RouteSide side, out Point pointShift, List<string> order, List<TopologyItem> topology, List<Block> blocks)
         {
             var index = side.StartIndex;
+            var block = blocks.Find(a => a.Name == name);
 
-            if (blocks.Find(a => a.Name == name).Count < 1)
-                throw new Exception("Кончились блоки");
+            if (block == null || block.Count < 1)
+            {
+                pointShift = new Point(0, 0);
+                return;
+            }
 
             order.Insert(index, name);
 
@@ -760,10 +757,10 @@ namespace LilaApp.Algorithm
                     topology[i].SecondBlock++;
                 }
             }
-            var block = blocks.Find(a => a.Name == name);
+
             block.Count -= 1;
 
-            if (block.Count == 0)
+            if (block.Count <= 0)
             {
                 blocks.Remove(block);
             }
