@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using LilaApp.Algorithm.Genetic;
+using LilaApp.Models.Railways;
 
 namespace Lilabu.ViewModels
 {
@@ -63,14 +64,15 @@ namespace Lilabu.ViewModels
             set {
 
                 // Останавливаем старый алгоритм
-                if (IsRunning) RunCommand?.Execute(null);
+                var wasRunning = IsRunning;
+                if (wasRunning) RunCommand?.Execute(null);
 
                 _selectedSolver = value;
                 Configuration.LastSolver = value;
                 Configuration.Save();
 
                 // Запускаем новый алгоритм
-                RunCommand?.Execute(null);
+                if (wasRunning) RunCommand?.Execute(null);
             }
         }
 
@@ -145,6 +147,14 @@ namespace Lilabu.ViewModels
 
             var trace = TraceBuilder.CalculateTrace(Model);
             WriteLine(string.Join("\r\n", trace.Exceptions.Select(error => error.Message)));
+
+            // Проверяем на пересечения:
+            var crosses = RailwayChain.FromModel(Model).FindCrosses();
+            foreach (var cross in crosses)
+            {
+                trace.Exceptions.Add(new Exception($"Пересечение блоков в точке {cross}"));
+                WriteLine($"Ошибка: Пересечение блоков в точке {cross}");
+            }
 
             if (ShouldDraw)
             {
@@ -274,6 +284,8 @@ namespace Lilabu.ViewModels
                             var answer = solver.Solve(Model, checker);
 
                             DisplayModelStep(null, answer);
+
+                            if (IsRunning) RunCommand?.Execute(null);
                         }
                         catch (OperationCanceledException)
                         {

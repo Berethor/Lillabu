@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LilaApp;
+using LilaApp.Algorithm;
 using LilaApp.Models;
 using LilaApp.Models.Railways;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -109,6 +110,48 @@ namespace LilaAppTests
 
             attempt = circle.TryScale(0);
             Assert.IsTrue(attempt, "Кольцевая трасса должна быть масштабируема");
+        }
+
+        [TestMethod]
+        public void Test_5_Cross()
+        {
+            var model = new Model()
+            {
+                Blocks =
+                {
+                    new Block("L4", 10, 0),
+                    new Block("T4", 10, 0),
+                },
+            };
+
+            var template = RailwayFactory.Default.BuildTemplate("L4T2T2T2L4", model);
+
+            var crosses = template.FindCrosses();
+
+            Assert.AreEqual(1, crosses.Count);
+            Assert.AreEqual(new Point(0, 1), crosses[0]);
+        }
+
+
+        [TestMethod]
+        public void Test_5_CrossBridge()
+        {
+            var model = new Model()
+            {
+                Blocks =
+                {
+                    new Block("B1", 10, 0),
+                    new Block("L1", 10, 0),
+                    new Block("L4", 10, 0),
+                    new Block("T4", 10, 0),
+                },
+            };
+
+            var template = RailwayFactory.Default.BuildTemplate("B1L1T2T2T2L4", model);
+
+            var crosses = template.FindCrosses();
+
+            Assert.AreEqual(0, crosses.Count);
         }
     }
 }

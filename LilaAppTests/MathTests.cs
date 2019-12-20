@@ -111,5 +111,70 @@ namespace LilaAppTests
             Assert.IsFalse(MathFunctions.CheckTurn(new Point(R, - 2 * d), C, A, B, angle, R));
         }
 
+        [TestMethod]
+        public void Test_3_Cross_1_Diagonal()
+        {
+            var answer = MathFunctions.CrossPoint(
+                new Point(1, 1),
+                new Point(3, 3),
+                new Point(1, 3),
+                new Point(3, 1)
+            );
+
+            Assert.AreEqual(new Point(2, 2), answer);
+        }
+
+        [TestMethod]
+        public void Test_3_Cross_2_VerticalHorizontal()
+        {
+            var answer = MathFunctions.CrossPoint(
+                new Point(1, 1),
+                new Point(3, 1),
+                new Point(2, 3),
+                new Point(2, 0)
+            );
+
+            Assert.AreEqual(new Point(2, 1), answer);
+        }
+
+        [TestMethod]
+        public void Test_3_Cross_3_VerticalDiagonal()
+        {
+            var answer = MathFunctions.CrossPoint(
+                new Point(0, 0),
+                new Point(0, 5),
+                new Point(-1, 1),
+                new Point(1, 3)
+            );
+
+            Assert.AreEqual(new Point(0, 2), answer);
+        }
+
+        [TestMethod]
+        public void Test_3_Cross_4_Touch()
+        {
+            var answer = MathFunctions.CrossPoint(
+                new Point(0, 0),
+                new Point(0, 5),
+                new Point(5, 0),
+                new Point(0, 0)
+            );
+
+            Assert.AreEqual(new Point(0, 0), answer);
+        }
+
+        [TestMethod]
+        public void Test_3_Cross_5_Touch()
+        {
+            var answer = MathFunctions.CrossPoint(
+                new Point(2, 2),
+                new Point(9, 5),
+                new Point(8, 3),
+                new Point(2, 2)
+            );
+
+            Assert.AreEqual(new Point(2, 2), answer);
+        }
+
     }
 }

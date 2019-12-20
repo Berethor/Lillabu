@@ -1,5 +1,8 @@
-﻿using System;
+﻿using LilaApp.Algorithm;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LilaApp.Models.Railways
 {
@@ -148,6 +151,62 @@ namespace LilaApp.Models.Railways
             {
                 model.Blocks.Find(_ => _.Name == item.Name).Count++;
             }
+        }
+
+        /// <summary>
+        /// Найти все пересечения блоков рельс
+        /// </summary>
+        /// <param name="template"></param>
+        /// <param name="includeBridges">Включая пересечения под мостами</param>
+        /// <returns>Список точек пересечения или пустой список</returns>
+        public static List<Point> FindCrosses(this IRailwayTemplate template, bool includeBridges = false)
+        {
+            var answer = new List<Point>();
+
+            var railways = template.GetRailways().ToArray();
+
+            Parallel.For(0, railways.Length, (i) =>
+            {
+                for (var j = i + 2; j < railways.Length; j++)
+                {
+                    if (i == 0 && j == railways.Length - 1) continue;
+
+                    if (MathFunctions.CrossPoint(
+                        railways[i].Start, railways[i].End,
+                        railways[j].Start, railways[j].End) is Point p)
+                    {
+                        if (!includeBridges)
+                        {
+                            var bridge =
+                                (railways[i].Type == RailwayType.B1) ? railways[i] :
+                                (railways[j].Type == RailwayType.B1) ? railways[j] : null;
+
+                            if (bridge == null)
+                            {
+                                answer.Add(p);
+                                continue;
+                            }
+
+                            var center = new Point(
+                                x: (bridge.Start.X + bridge.End.X) / 2,
+                                y: (bridge.Start.Y + bridge.End.Y) / 2
+                            );
+
+                            if (p != center)
+                            {
+                                answer.Add(p);
+                            }
+                        }
+                        else
+                        {
+                            answer.Add(p);
+                        }
+                    }
+                }
+            });
+
+
+            return answer;
         }
     }
 

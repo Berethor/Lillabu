@@ -64,6 +64,35 @@ namespace LilaApp.Models.Railways
             Dimensions = new TemplateDimensions(this, false);
         }
 
+        /// <summary>
+        /// Цепочка блоков рельсов на основе модели
+        /// </summary>
+        /// <param name="model">Модель</param>
+        /// <returns></returns>
+        public static RailwayChain FromModel(Model model)
+        {
+            var railways = new List<IRailwayTemplate>() { new Railway(RailwayType.L0) };
+
+            foreach (var item in model.Topology)
+            {
+                if (item.SecondBlock == 0) continue;
+
+                var block = model.Order[item.SecondBlock - 1];
+
+                var blocksCount = model.Blocks.FirstOrDefault(_ => _.Name == block);
+
+                if (blocksCount != null) blocksCount.Count--;
+
+                if (item.Direction == -1 && block.StartsWith("T")) block = block.ToLower();
+
+                railways.Add(Railway.From(block));
+            }
+
+            var chain = new RailwayChain(railways.ToArray());
+
+            return chain;
+        }
+
         #endregion
 
         #region Implementation of IRailwayTemplate
@@ -342,6 +371,30 @@ namespace LilaApp.Models.Railways
         /// <returns>начало и окончание цепочки или null, если не не удалось найти</returns>
         internal (IRailwayTemplate start, IRailwayTemplate end)? FindSubTemplate(Point templateOutput)
         {
+            var applicants = FindSubTemplates(templateOutput);
+
+            if (!applicants.Any()) return null;
+
+            var min = 0;
+
+            for (var i = 0; i < applicants.Count; i++)
+            {
+                if (applicants[i].length < applicants[min].length)
+                {
+                    min = i;
+                }
+            }
+
+            return (applicants[min].start, applicants[min].end);
+        }
+
+        /// <summary>
+        /// Поиск под-шаблонов среди дочерних элементов, подходящего под указанную точку выхода
+        /// </summary>
+        /// <param name="templateOutput">Точка выхода из шаблона, из расчёта, что шаблон присоединяется к точке (0,0,↑)</param>
+        /// <returns> Список элементов: начало и окончание цепочки или null, если не не удалось найти</returns>
+        public List<(int length, IRailwayTemplate start, IRailwayTemplate end)> FindSubTemplates(Point templateOutput)
+        {
             var applicants = new List<(int length, IRailwayTemplate start, IRailwayTemplate end)>();
 
             for (var i = _head; i != _tail.Next; i = i.Next)
@@ -370,20 +423,9 @@ namespace LilaApp.Models.Railways
                 }
             }
 
-            if (applicants.Count == 0) return null;
-
-            var min = 0;
-
-            for (var i = 0; i < applicants.Count; i++)
-            {
-                if (applicants[i].length < applicants[min].length)
-                {
-                    min = i;
-                }
-            }
-
-            return (applicants[min].start, applicants[min].end);
-
+            applicants.Sort((a, b) => a.length.CompareTo(b.length));
+            
+            return applicants;
         }
 
         /// <summary>

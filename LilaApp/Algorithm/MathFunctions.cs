@@ -115,5 +115,71 @@ namespace LilaApp.Algorithm
 
             return distance;
         }
+
+
+        /// <summary>
+        /// Векторное произведение
+        /// </summary>
+        public static double VectorMultiply(double ax, double ay, double bx, double by)
+        {
+            return ax * by - bx * ay;
+        }
+        /// <summary>
+        /// Пересекаются ли два отрезка
+        /// </summary>
+        public static bool AreCrossing(Point p1, Point p2, Point p3, Point p4)//проверка пересечения
+        {
+            if (p1 == p3 || p1 == p4 || p2 == p4) return true;
+
+            var v1 = VectorMultiply(p4.X - p3.X, p4.Y - p3.Y, p1.X - p3.X, p1.Y - p3.Y);
+            var v2 = VectorMultiply(p4.X - p3.X, p4.Y - p3.Y, p2.X - p3.X, p2.Y - p3.Y);
+            var v3 = VectorMultiply(p2.X - p1.X, p2.Y - p1.Y, p3.X - p1.X, p3.Y - p1.Y);
+            var v4 = VectorMultiply(p2.X - p1.X, p2.Y - p1.Y, p4.X - p1.X, p4.Y - p1.Y);
+
+            return ((v1 * v2) < 0 && (v3 * v4) < 0);
+        }
+
+        /// <summary>
+        /// Точка пересечения двух отрезков
+        /// </summary>
+        /// <returns> null, если отрезки не пересекаются </returns>
+        public static Point? CrossPoint(Point p1, Point p2, Point p3, Point p4)
+        {
+            if (AreCrossing(p1, p2, p3, p4))
+            {
+                var (a1, b1, c1) = LineEquation(p1, p2);
+                var (a2, b2, c2) = LineEquation(p3, p4);
+                var p = CrossingPoint(a1, b1, c1, a2, b2, c2);
+
+                return p;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Построение уравнения прямой
+        /// </summary>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <returns> Коэффициенты уравнения прямой вида: Ax+By+C=0 </returns>
+        public static (double A, double B, double C) LineEquation(Point p1, Point p2)
+        {
+            var a = p2.Y - p1.Y;
+            var b = p1.X - p2.X;
+            var c = -p1.X * (p2.Y - p1.Y) + p1.Y * (p2.X - p1.X);
+
+            return (a, b, c);
+        }
+
+        private static Point CrossingPoint(double a1, double b1, double c1, double a2, double b2, double c2)
+        {
+            var d = (a1 * b2 - b1 * a2);
+            var dx = (-c1 * b2 + b1 * c2);
+            var dy = (-a1 * c2 + c1 * a2);
+
+            return new Point(x: dx / d, y: dy / d);
+        }
+
     }
 }
