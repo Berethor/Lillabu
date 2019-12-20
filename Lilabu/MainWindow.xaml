@@ -80,6 +80,6 @@
             <TextBox Margin="5" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Text="{Binding Path=Output}" TextWrapping="Wrap"/>
         </GroupBox>
 
-
+        <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Text="{Binding Path=Version, StringFormat='Версия программы: v{0}'}"  Margin="0,-5,8,0"  FontSize="9"  Foreground="DarkGray" />
     </Grid>
 </Window>

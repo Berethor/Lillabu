@@ -103,7 +103,14 @@ namespace Lilabu
 
         private void Joystick_OnKeyPress(object sender, JoystickEventArg e)
         {
-            Context.ErrorMessage = (_answer == null) ? "Алгоритм не запущен" : null;
+            if (_answer == null)
+            {
+                Context.ErrorMessage = "Алгоритм не запущен";
+                
+                return;
+            }
+
+            Context.ErrorMessage = null;
 
             switch (e.Key)
             {

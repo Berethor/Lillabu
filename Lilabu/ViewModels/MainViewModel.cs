@@ -3,6 +3,7 @@ using LilaApp.Algorithm;
 using LilaApp.Models;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +14,8 @@ namespace Lilabu.ViewModels
     public class MainViewModel : ABaseViewModel
     {
         #region Properties
+
+        public string Version { get => Get<string>(); set => Set(value); }
 
         /// <summary>
         /// Заголовок
@@ -202,7 +205,6 @@ namespace Lilabu.ViewModels
             }
         }
 
-
         private CancellationTokenSource _cts;
 
         /// <summary>
@@ -211,6 +213,7 @@ namespace Lilabu.ViewModels
         public MainViewModel(Window mainWindow = null)
         {
             Title = "Lilabu Application";
+            Version = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
 
             RunText = "Запустить";
 
