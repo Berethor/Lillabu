@@ -24,8 +24,14 @@ namespace Lilabu
             _checker = checker;
 
             var chain = RailwayChain.FromModel(_answer, true);
-            _current2 = _current1 = chain[0];
-            _chain = chain;
+            _current1 = _chain = new Railway(RailwayType.L0);
+            foreach (var railway in chain.GetRailways())
+            {
+                if(railway.IsHead()) continue;
+                _current1.Append(railway);
+            }
+
+            _current1 = _current2 = _chain;
 
             Context = new DrawableContext();
 
