@@ -18,7 +18,7 @@ namespace LilaApp.Algorithm
             _checker = checker;
             Best = new FinalAnswer(_answer, _checker.Solve(_answer));
 
-            _chain = RailwayChain.FromModel(_answer);
+            _chain = RailwayChain.FromModel(_answer, reduceCount: true);
             _current = _chain;
 
             try

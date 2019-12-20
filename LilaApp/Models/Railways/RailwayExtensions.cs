@@ -169,7 +169,7 @@ namespace LilaApp.Models.Railways
             {
                 for (var j = i + 2; j < railways.Length; j++)
                 {
-                    if (i == 0 && j == railways.Length - 1) continue;
+                    if (railways[i].IsHead() || i == 1 && j == railways.Length - 1) continue;
 
                     if (MathFunctions.CrossPoint(
                         railways[i].Start, railways[i].End,

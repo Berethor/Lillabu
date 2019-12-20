@@ -68,8 +68,9 @@ namespace LilaApp.Models.Railways
         /// Цепочка блоков рельсов на основе модели
         /// </summary>
         /// <param name="model">Модель</param>
+        /// <param name="reduceCount">Уменьшать количество доступных блоков в модели</param>
         /// <returns></returns>
-        public static RailwayChain FromModel(Model model)
+        public static RailwayChain FromModel(Model model, bool reduceCount = false)
         {
             var railways = new List<IRailwayTemplate>() { new Railway(RailwayType.L0) };
 
@@ -79,9 +80,12 @@ namespace LilaApp.Models.Railways
 
                 var block = model.Order[item.SecondBlock - 1];
 
-                var blocksCount = model.Blocks.FirstOrDefault(_ => _.Name == block);
+                if (reduceCount)
+                {
+                    var blocksCount = model.Blocks.FirstOrDefault(_ => _.Name == block);
 
-                if (blocksCount != null) blocksCount.Count--;
+                    if (blocksCount != null) blocksCount.Count--;
+                }
 
                 if (item.Direction == -1 && block.StartsWith("T")) block = block.ToLower();
 
