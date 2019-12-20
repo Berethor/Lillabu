@@ -20,6 +20,9 @@ namespace LilaApp.Algorithm
 
             _answer = Model.Copy(_model);
 
+            Configuration = SecondSolverConfiguration.Default.Load();
+            Configuration.Save();
+
             Run();
 
             return new FinalAnswer()
@@ -33,6 +36,8 @@ namespace LilaApp.Algorithm
 
         public event EventHandler<FinalAnswer> OnStepEvent;
         public CancellationToken Token { get; set; }
+
+        public SecondSolverConfiguration Configuration { get; set; }
 
         private Model _model;
         private Model _answer;
@@ -59,8 +64,8 @@ namespace LilaApp.Algorithm
             TracePrice traceIncome;
             Point pointShift;
 
-            int clusterCount = 16;
-            int iterationCount = 10000;
+            int clusterCount = Configuration.ClusterCount;
+            int iterationCount = Configuration.ClusterCount;
 
             IClusterization<double> clusterization = new KMeans(clusterCount, new EuclideanDistance(), iterationCount);
 
