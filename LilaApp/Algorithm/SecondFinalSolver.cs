@@ -292,7 +292,15 @@ namespace LilaApp.Algorithm
                 && sortedStraightElements.Find(_ =>_.Name == "L1")?.Count > 2)
             {
                 var startIndex = index;
-                var angle = trace.Points[index].Angle;
+                double angle = 0;
+                try
+                {
+                    angle = trace.Points[index].Angle;
+                }
+                catch(Exception ex)
+                {
+
+                }
                 //Номер стороны от которой создается круг
                 var sideIndex = sides.FindIndex(a =>
                            a.StartIndex - index == 0 || a.EndIndex - index == 0);
@@ -503,7 +511,7 @@ namespace LilaApp.Algorithm
                             //ChangeSidePointer(sides, insertIndex, "Up");
 
                             break;
-                        // влево вверх
+                        // влево вверх +
                         case (Math.PI / 2):
                             sides[insertIndex].actions.Add(("Up", sides[insertIndex + 2], false));
                             sides[insertIndex].actions.Add(("Down", sides[insertIndex], false));
@@ -536,7 +544,7 @@ namespace LilaApp.Algorithm
                             sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], false));
 
                             sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex], false));
-                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], false));
+                            sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex + 3], true));
                             sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 2], false));
                             sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex], false));
 
@@ -553,27 +561,27 @@ namespace LilaApp.Algorithm
                             //ChangeSidePointer(sides, insertIndex, "Left");
                             //ChangeSidePointer(sides, insertIndex, "Up");
                             break;
-                        // вправо вниз
+                        // влево вниз
                         case (Math.PI):
-                            sides[insertIndex].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex].actions.Add(("Up", sides[insertIndex + 3], false));
                             sides[insertIndex].actions.Add(("Down", sides[insertIndex + 2], true));
-                            sides[insertIndex].actions.Add(("Right", sides[insertIndex + 1], false));
-                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 2], false));
+                            sides[insertIndex].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex].actions.Add(("Left", sides[insertIndex + 1], false));
 
-                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Up", sides[insertIndex + 3], false));
                             sides[insertIndex + 1].actions.Add(("Down", sides[insertIndex], false));
-                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex + 3], true));
-                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex + 2], false));
+                            sides[insertIndex + 1].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 1].actions.Add(("Left", sides[insertIndex + 3], true));
 
-                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Up", sides[insertIndex + 3], false));
                             sides[insertIndex + 2].actions.Add(("Down", sides[insertIndex], true));
-                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex + 1], false));
-                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex + 2], false));
+                            sides[insertIndex + 2].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 2].actions.Add(("Left", sides[insertIndex + 1], false));
 
-                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Up", sides[insertIndex + 3], false));
                             sides[insertIndex + 3].actions.Add(("Down", sides[insertIndex], false));
-                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex + 1], true));
-                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 2], false));
+                            sides[insertIndex + 3].actions.Add(("Right", sides[insertIndex], false));
+                            sides[insertIndex + 3].actions.Add(("Left", sides[insertIndex + 1], true));
 
                             //ChangeSidePointer(sides, insertIndex, "Right");
                             //ChangeSidePointer(sides, insertIndex, "Down");
