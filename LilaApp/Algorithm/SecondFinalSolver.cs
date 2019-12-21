@@ -1,10 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Collections.Generic;
-
-using LilaApp.Models;
 using LilaApp.Algorithm.SecondSolverHelper;
+using LilaApp.Models;
 
 namespace LilaApp.Algorithm
 {
@@ -68,29 +67,33 @@ namespace LilaApp.Algorithm
             TracePrice traceIncome;
             Point pointShift;
 
-            int clusterCount = Configuration.ClusterCount;
-            int iterationCount = Configuration.IterationCount;
-
-            IClusterization<double> clusterization = new KMeans(clusterCount, new EuclideanDistance(), iterationCount);
-
-
-            List<DataItem<double>> data = new List<DataItem<double>>();
-
-            for (int i = 0; i < points.Count; i++)
+            if (Configuration.EnableClusters && points.Count > Configuration.ClusterCount)
             {
-                data.Add(new DataItem<double>(new double[] { points[i].X, points[i].Y/*, points[i].Price*/ }, null));
+                int clusterCount = Configuration.ClusterCount;
+                int iterationCount = Configuration.IterationCount;
+
+                IClusterization<double> clusterization =
+                    new KMeans(clusterCount, new EuclideanDistance(), iterationCount);
+
+                List<DataItem<double>> data = new List<DataItem<double>>();
+
+                for (int i = 0; i < points.Count; i++)
+                {
+                    data.Add(new DataItem<double>(new double[] { points[i].X, points[i].Y, points[i].Price}, null));
+                }
+
+                ClusterizationResult<double> c = clusterization.MakeClusterization(data);
+
+                points = new List<Point>();
+
+                for (int i = 0; i < c.Centroids.Count; i++)
+                {
+                    var centroidPoint = new Point(c.Centroids[i][0], c.Centroids[i][1], price: c.Centroids[i][2]);
+                    points.Add(centroidPoint);
+                    Context.Centroids.Add(centroidPoint);
+                }
             }
 
-            ClusterizationResult<double> c = clusterization.MakeClusterization(data);
-
-            points = new List<Point>();
-
-            for (int i = 0; i < c.Centroids.Count; i++)
-            {
-                var centroidPoint = new Point(c.Centroids[i][0], c.Centroids[i][1]/*, price: c.Centroids[i][2]*/);
-                points.Add(centroidPoint);
-                Context.Centroids.Add(centroidPoint);
-            }
             _priceC = 1;
 
             foreach (var block in blocks)
@@ -347,7 +350,7 @@ namespace LilaApp.Algorithm
                 }
                 catch (Exception ex)
                 {
-
+                    Context.ErrorMessage = $"{ex}";
                 }
                 //Номер стороны от которой создается круг
                 var sideIndex = sides.FindIndex(a =>
@@ -379,7 +382,7 @@ namespace LilaApp.Algorithm
                 _answer.Order = order;
                 _answer.Topology = topology;
 
-                OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
+                //OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
                 List<string> firstSide = new List<string>();
                 List<string> firstTurn = new List<string>();
@@ -424,7 +427,7 @@ namespace LilaApp.Algorithm
                     _answer.Topology = copyTopology;
                     topology = copyTopology;
                     trace = TraceBuilder.CalculateTrace(_answer);
-                    OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
+                    //OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
                     throw ex;
                 }
                 ///
@@ -450,7 +453,7 @@ namespace LilaApp.Algorithm
                 _answer.Order = order;
                 _answer.Topology = topology;
 
-                OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
+                //OnStepEvent?.Invoke(this, new FinalAnswer(_answer, _checker.Solve(_answer)));
 
                 for (int i = 0; i < sides.Count; i++)
                 {

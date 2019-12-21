@@ -12,6 +12,11 @@
         /// </summary>
         public int IterationCount { get; set; }
 
+        /// <summary>
+        /// Включить / выключить разбиение на кластеры
+        /// </summary>
+        public bool EnableClusters { get; set; }
+
         #region Implementation of IConfiguration
 
         /// <summary>
@@ -25,6 +30,7 @@
         {
             ClusterCount = 16,
             IterationCount = 10000,
+            EnableClusters = true,
         };
     }
 }

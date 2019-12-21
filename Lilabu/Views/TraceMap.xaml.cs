@@ -276,6 +276,8 @@ namespace Lilabu.Views
                     if (VM?.Context?.Centroids[i] is Point centroid)
                     {
                         AddEllipse(centroid, new SolidColorBrush(Colors.Aqua) { Opacity = 0.5 }, 0.75);
+
+                        AddText($"{centroid.Price:F0}", new Point(centroid.X, centroid.Y - 1), 5, Brushes.DarkGray);
                     }
                 }
             }
